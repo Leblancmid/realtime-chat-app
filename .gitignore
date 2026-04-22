@@ -1,0 +1,18 @@
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Laravel
+/backend/vendor
+/backend/.env
+/backend/storage/*.key
+
+# React
+/frontend/node_modules
+
+# OS
+.DS_Store
+
+# IDE
+.vscode
