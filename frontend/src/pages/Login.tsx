@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import { api } from "../api/axios";
+import { useAuth } from "@/context/AuthContext";
 
 type LoginForm = {
     email: string;
@@ -8,6 +9,9 @@ type LoginForm = {
 };
 
 export default function Login() {
+
+    const { fetchUser } = useAuth();
+
     const [form, setForm] = useState<LoginForm>({
         email: "",
         password: "",
@@ -31,6 +35,7 @@ export default function Login() {
             await api.get("/sanctum/csrf-cookie");
 
             await api.post("/login", form);
+            await fetchUser();
 
             alert("Logged in!");
         } catch {

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
-import { api } from "../api/axios";
+import { api } from "@/api/axios";
+import { useAuth } from "@/context/AuthContext";
 
 type RegisterForm = {
     name: string;
@@ -30,6 +31,8 @@ export default function Register() {
         });
     };
 
+    const { fetchUser } = useAuth();
+
     const handleRegister = async (e: FormEvent) => {
         e.preventDefault();
 
@@ -44,6 +47,7 @@ export default function Register() {
                 email: form.email,
                 password: form.password,
             });
+            await fetchUser();
 
             alert("Registered & Logged in!");
         } catch (err: any) {
