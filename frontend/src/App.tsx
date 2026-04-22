@@ -1,39 +1,21 @@
-import { useEffect } from "react";
-import { api } from "./api/axios";
+import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
+import Register from "./pages/Register";
+import Login from "./pages/Login";
 
 function App() {
-  useEffect(() => {
-    const testAuth = async () => {
-      try {
-        // 1. Get CSRF cookie
-        await api.get("/sanctum/csrf-cookie");
-        console.log(document.cookie);
+  return (
+    <BrowserRouter>
+      <nav>
+        <Link to="/register">Register</Link> |{" "}
+        <Link to="/login">Login</Link>
+      </nav>
 
-        // Register
-        await api.post("/api/register", {
-          name: "Test User",
-          email: "test4@example.com",
-          password: "password",
-        });
-
-        // Login
-        await api.post("/api/login", {
-          email: "test4@example.com",
-          password: "password",
-        });
-
-        // Get user
-        const res = await api.get("/api/user");
-
-      } catch (err) {
-        console.error(err);
-      }
-    };
-
-    testAuth();
-  }, []);
-
-  return <h1>Testing Auth...</h1>;
+      <Routes>
+        <Route path="/register" element={<Register />} />
+        <Route path="/login" element={<Login />} />
+      </Routes>
+    </BrowserRouter>
+  );
 }
 
 export default App;
