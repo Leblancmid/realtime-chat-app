@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import { api } from "../api/axios";
 import { useAuth } from "@/context/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 type LoginForm = {
     email: string;
@@ -26,6 +27,8 @@ export default function Login() {
         });
     };
 
+    const navigate = useNavigate();
+
     const handleLogin = async (e: FormEvent) => {
         e.preventDefault();
 
@@ -38,6 +41,8 @@ export default function Login() {
             await fetchUser();
 
             alert("Logged in!");
+
+            navigate("/dashboard");
         } catch {
             setError("Invalid credentials");
         }

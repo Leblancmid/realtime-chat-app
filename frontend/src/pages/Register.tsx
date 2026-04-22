@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import { api } from "@/api/axios";
 import { useAuth } from "@/context/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 type RegisterForm = {
     name: string;
@@ -33,6 +34,8 @@ export default function Register() {
 
     const { fetchUser } = useAuth();
 
+    const navigate = useNavigate();
+
     const handleRegister = async (e: FormEvent) => {
         e.preventDefault();
 
@@ -50,6 +53,7 @@ export default function Register() {
             await fetchUser();
 
             alert("Registered & Logged in!");
+            navigate("/dashboard");
         } catch (err: any) {
             if (err.response?.status === 422) {
                 setErrors(err.response.data.errors);
