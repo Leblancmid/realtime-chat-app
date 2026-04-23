@@ -41,31 +41,36 @@ export default function Chat() {
     useEffect(() => {
         if (!user) return;
 
-        console.log("Echo instance:", echo);
-
         echo.channel(`chat.${user.id}`)
-            .listen("MessageSent", (e: any) => {
+            .listen(".MessageSent", (e: any) => {
                 console.log("🔥 REALTIME EVENT:", e);
-                setMessages((prev) => [...prev, e.message]);
+
+                // ✅ Only update if current chat is open
+                if (selectedUser && e.message.sender_id === selectedUser.id) {
+                    setMessages((prev) => [...prev, e.message]);
+                }
             });
 
         return () => {
             echo.leave(`chat.${user.id}`);
         };
-    }, [user]);
+    }, [user, selectedUser]);
 
     const sendMessage = async () => {
         if (!selectedUser || !text) return;
 
-        await api.post("/api/messages", {
+        const res = await api.post("/api/messages", {
             receiver_id: selectedUser.id,
             message: text,
         });
 
+        // ✅ update UI instantly for sender
+        setMessages((prev) => [...prev, res.data]);
+
         setText("");
 
-        const res = await api.get(`/api/messages/${selectedUser.id}`);
-        setMessages(res.data);
+        // const res = await api.get(`/api/messages/${selectedUser.id}`);
+        // setMessages(res.data);
     };
 
     return (

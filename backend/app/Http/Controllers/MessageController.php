@@ -28,8 +28,11 @@ class MessageController extends Controller
             'message' => $request->message,
         ]);
 
-        // 🔥 THIS IS THE IMPORTANT PART
-        broadcast(new MessageSent($message))->toOthers();
+        // 👇 ADD IT HERE
+        logger('Broadcast fired', ['message' => $message]);
+
+        // broadcast event
+        broadcast(new MessageSent($message));
 
         return $message;
     }
