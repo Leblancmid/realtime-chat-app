@@ -13,10 +13,6 @@ Route::middleware('auth:sanctum')->group(function () {
         return $request->user();
     });
 
-    Route::get('/users', function () {
-        return \App\Models\User::where('id', '!=', Auth::id())->get();
-    });
-
     Route::get('/messages/{userId}', [MessageController::class, 'index']);
     Route::post('/messages', [MessageController::class, 'store']);
 

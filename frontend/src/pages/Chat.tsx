@@ -29,9 +29,8 @@ export default function Chat() {
 
     const { user } = useAuth();
     const chatRef = useRef<HTMLDivElement | null>(null);
-    const typingTimeout = useRef<any>(null);
 
-    // 🔹 Load users (auto refresh)
+    // 🔹 Load users
     useEffect(() => {
         const fetchUsers = () => {
             api.get("/api/users").then((res) => setUsers(res.data));
@@ -43,33 +42,25 @@ export default function Chat() {
         return () => clearInterval(interval);
     }, []);
 
-    // 🔹 Load messages when selecting user
+    // 🔹 Load messages
     useEffect(() => {
         if (!selectedUser) return;
 
-        api
-            .get(`/api/messages/${selectedUser.id}`)
-            .then((res) => setMessages(res.data));
+        api.get(`/api/messages/${selectedUser.id}`).then((res) => {
+            setMessages(
+                res.data.sort(
+                    (a: Message, b: Message) =>
+                        new Date(a.created_at).getTime() -
+                        new Date(b.created_at).getTime()
+                )
+            );
+        });
+
+        // mark as seen
+        api.post("/api/messages/seen", {
+            user_id: selectedUser.id,
+        });
     }, [selectedUser]);
-
-    // 🔹 Online heartbeat
-    useEffect(() => {
-        const interval = setInterval(() => {
-            api.post("/api/online");
-        }, 5000);
-
-        return () => clearInterval(interval);
-    }, []);
-
-    useEffect(() => {
-        if (!selectedUser) return;
-
-        const updated = users.find(u => u.id === selectedUser.id);
-
-        if (updated) {
-            setSelectedUser(updated);
-        }
-    }, [users]);
 
     // 🔥 Realtime listeners
     useEffect(() => {
@@ -80,8 +71,33 @@ export default function Chat() {
         // MESSAGE
         channel.listen(".MessageSent", (e: any) => {
             if (selectedUser && e.message.sender_id === selectedUser.id) {
-                setMessages((prev) => [...prev, e.message]);
+                setMessages((prev) =>
+                    [...prev, e.message].sort(
+                        (a, b) =>
+                            new Date(a.created_at).getTime() -
+                            new Date(b.created_at).getTime()
+                    )
+                );
             }
+        });
+
+        // SEEN
+        channel.listen(".MessageSeen", () => {
+            setMessages((prev) => {
+                const lastIndex = [...prev]
+                    .reverse()
+                    .findIndex((msg) => msg.sender_id === user.id);
+
+                if (lastIndex === -1) return prev;
+
+                const realIndex = prev.length - 1 - lastIndex;
+
+                return prev.map((msg, index) =>
+                    index === realIndex
+                        ? { ...msg, read_at: new Date().toISOString() }
+                        : msg
+                );
+            });
         });
 
         // TYPING
@@ -89,9 +105,7 @@ export default function Chat() {
             if (selectedUser && e.senderId === selectedUser.id) {
                 setTypingUser(e.senderId);
 
-                setTimeout(() => {
-                    setTypingUser(null);
-                }, 1500);
+                setTimeout(() => setTypingUser(null), 1500);
             }
         });
 
@@ -100,39 +114,13 @@ export default function Chat() {
         };
     }, [user, selectedUser]);
 
-    // 🔹 Smart auto-scroll
+    // 🔹 Auto-scroll
     useEffect(() => {
         const el = chatRef.current;
         if (!el) return;
 
-        const isNearBottom =
-            el.scrollHeight - el.scrollTop - el.clientHeight < 100;
-
-        if (isNearBottom) {
-            el.scrollTop = el.scrollHeight;
-        }
+        el.scrollTop = el.scrollHeight;
     }, [messages]);
-
-    // 🔹 Typing handler
-    const handleTyping = async () => {
-        if (!selectedUser) return;
-
-        if (typingTimeout.current) {
-            clearTimeout(typingTimeout.current);
-        }
-
-        try {
-            await api.get("/sanctum/csrf-cookie");
-
-            await api.post("/api/typing", {
-                receiver_id: selectedUser.id,
-            });
-        } catch (err) {
-            console.error(err);
-        }
-
-        typingTimeout.current = setTimeout(() => { }, 1000);
-    };
 
     // 🔹 Send message
     const sendMessage = async () => {
@@ -143,41 +131,16 @@ export default function Chat() {
             message: text,
         });
 
-        setMessages((prev) => [...prev, res.data]);
+        setMessages((prev) =>
+            [...prev, res.data].sort(
+                (a, b) =>
+                    new Date(a.created_at).getTime() -
+                    new Date(b.created_at).getTime()
+            )
+        );
+
         setText("");
     };
-
-    // seen
-    useEffect(() => {
-        if (!selectedUser) return;
-
-        api.get(`/api/messages/${selectedUser.id}`).then((res) => {
-            setMessages(res.data);
-        });
-
-        // ✅ mark as seen
-        api.post("/api/messages/seen", {
-            user_id: selectedUser.id,
-        });
-    }, [selectedUser]);
-
-    useEffect(() => {
-        if (!user) return;
-
-        echo.channel(`chat.${user.id}`)
-            .listen(".MessageSeen", () => {
-                console.log("👀 Seen update");
-
-                setMessages((prev) =>
-                    prev.map((msg) =>
-                        msg.sender_id === user.id
-                            ? { ...msg, read_at: new Date().toISOString() }
-                            : msg
-                    )
-                );
-            });
-
-    }, [user]);
 
     return (
         <div className="flex h-screen bg-[#0f172a] text-white">
@@ -192,12 +155,11 @@ export default function Chat() {
                         <div
                             key={u.id}
                             onClick={() => setSelectedUser(u)}
-                            className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition ${selectedUser?.id === u.id
+                            className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer ${selectedUser?.id === u.id
                                 ? "bg-gray-800"
                                 : "hover:bg-gray-800/60"
                                 }`}
                         >
-                            {/* Avatar */}
                             <div className="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center text-sm">
                                 {u.name[0]}
                             </div>
@@ -209,9 +171,10 @@ export default function Chat() {
                                 </p>
                             </div>
 
-                            {/* Online dot */}
                             <span
-                                className={`w-2 h-2 rounded-full ${u.is_online ? "bg-green-500" : "bg-gray-500"
+                                className={`w-2 h-2 rounded-full ${u.is_online
+                                    ? "bg-green-500"
+                                    : "bg-gray-500"
                                     }`}
                             />
                         </div>
@@ -219,7 +182,7 @@ export default function Chat() {
                 </div>
             </div>
 
-            {/* Chat Area */}
+            {/* Chat */}
             <div className="flex-1 flex flex-col">
                 {selectedUser ? (
                     <>
@@ -230,7 +193,9 @@ export default function Chat() {
                             </div>
 
                             <div>
-                                <p className="font-medium">{selectedUser.name}</p>
+                                <p className="font-medium">
+                                    {selectedUser.name}
+                                </p>
                                 <p className="text-xs text-gray-400">
                                     {selectedUser.is_online
                                         ? "Online"
@@ -244,13 +209,20 @@ export default function Chat() {
                             ref={chatRef}
                             className="flex-1 overflow-y-auto px-6 py-4 space-y-4"
                         >
-                            {messages.map((msg) => {
+                            {messages.map((msg, index) => {
                                 const isMe = msg.sender_id === user?.id;
+
+                                const lastSentIndex = messages
+                                    .map((m) => m.sender_id)
+                                    .lastIndexOf(user?.id || 0);
 
                                 return (
                                     <div
                                         key={msg.id}
-                                        className={`flex ${isMe ? "justify-end" : "justify-start"}`}
+                                        className={`flex ${isMe
+                                            ? "justify-end"
+                                            : "justify-start"
+                                            }`}
                                     >
                                         {!isMe && (
                                             <div className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center text-xs mr-2">
@@ -268,22 +240,21 @@ export default function Chat() {
                                                 {msg.message}
                                             </div>
 
-                                            {/* ✅ STATUS (FIXED POSITION) */}
-                                            {isMe && (
-                                                <p className="text-[10px] text-gray-400 mt-1 text-right">
-                                                    {msg.read_at
-                                                        ? "✔✔ Seen"
-                                                        : msg.delivered_at
-                                                            ? "✔✔ Delivered"
-                                                            : "✔ Sent"}
-                                                </p>
-                                            )}
+                                            {isMe &&
+                                                index === lastSentIndex && (
+                                                    <p className="text-[10px] text-gray-400 mt-1 text-right">
+                                                        {msg.read_at
+                                                            ? "✔✔ Seen"
+                                                            : msg.delivered_at
+                                                                ? "✔✔ Delivered"
+                                                                : "✔ Sent"}
+                                                    </p>
+                                                )}
                                         </div>
                                     </div>
                                 );
                             })}
 
-                            {/* Typing */}
                             {typingUser === selectedUser.id && (
                                 <div className="text-sm text-gray-400">
                                     {selectedUser.name} is typing...
@@ -293,20 +264,17 @@ export default function Chat() {
 
                         {/* Input */}
                         <div className="px-6 py-4 border-t border-gray-800 bg-[#020817]">
-                            <div className="flex items-center gap-2 bg-gray-800 px-4 py-2 rounded-full">
+                            <div className="flex gap-2 bg-gray-800 px-4 py-2 rounded-full">
                                 <input
                                     value={text}
-                                    onChange={(e) => {
-                                        setText(e.target.value);
-                                        handleTyping();
-                                    }}
+                                    onChange={(e) => setText(e.target.value)}
                                     className="flex-1 bg-transparent outline-none text-sm"
                                     placeholder="Message..."
                                 />
 
                                 <button
                                     onClick={sendMessage}
-                                    className="bg-blue-600 hover:bg-blue-700 px-4 py-1 rounded-full text-sm transition"
+                                    className="bg-blue-600 px-4 py-1 rounded-full text-sm"
                                 >
                                     Send
                                 </button>
@@ -315,7 +283,7 @@ export default function Chat() {
                     </>
                 ) : (
                     <div className="flex items-center justify-center h-full text-gray-500">
-                        Select a user to start chatting
+                        Select a user
                     </div>
                 )}
             </div>
