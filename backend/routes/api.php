@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\MessageController;
+use App\Models\Message;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
@@ -37,5 +38,14 @@ Route::middleware('auth:sanctum')->group(function () {
                 $user->is_online = Cache::has('user-online-' . $user->id);
                 return $user;
             });
+    });
+
+    Route::post('/messages/seen', function (Request $request) {
+        Message::where('sender_id', $request->user_id)
+            ->where('receiver_id', Auth::id())
+            ->whereNull('read_at')
+            ->update(['read_at' => now()]);
+
+        return response()->json(['status' => 'ok']);
     });
 });

@@ -10,18 +10,20 @@ class UserSeeder extends Seeder
 {
     public function run(): void
     {
-        User::truncate(); // optional: clears table
+        User::firstOrCreate(
+            ['email' => 'user1@example.com'],
+            [
+                'name' => 'User One',
+                'password' => Hash::make('password'),
+            ]
+        );
 
-        User::create([
-            'name' => 'User One',
-            'email' => 'user1@example.com',
-            'password' => Hash::make('password'),
-        ]);
-
-        User::create([
-            'name' => 'User Two',
-            'email' => 'user2@example.com',
-            'password' => Hash::make('password'),
-        ]);
+        User::firstOrCreate(
+            ['email' => 'user2@example.com'],
+            [
+                'name' => 'User Two',
+                'password' => Hash::make('password'),
+            ]
+        );
     }
 }

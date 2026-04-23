@@ -5,9 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Message;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use App\Events\MessageSent; // 🔥 ADD THIS
-use App\Events\UserTyping; // 🔥 ADD THIS
-
+use App\Events\MessageSent;
 
 class MessageController extends Controller
 {
@@ -20,6 +18,13 @@ class MessageController extends Controller
             $q->where('sender_id', $userId)
                 ->where('receiver_id', Auth::id());
         })->get();
+
+        Message::where('receiver_id', Auth::id())
+            ->where('sender_id', $userId)
+            ->whereNull('delivered_at')
+            ->update(['delivered_at' => now()]);
+
+        return $messages;
     }
 
     public function store(Request $request)

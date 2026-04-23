@@ -16,7 +16,8 @@ type Message = {
     receiver_id: number;
     message: string;
     created_at: string;
-    seen?: boolean;
+    delivered_at?: string;
+    read_at?: string;
 };
 
 export default function Chat() {
@@ -146,6 +147,38 @@ export default function Chat() {
         setText("");
     };
 
+    // seen
+    useEffect(() => {
+        if (!selectedUser) return;
+
+        api.get(`/api/messages/${selectedUser.id}`).then((res) => {
+            setMessages(res.data);
+        });
+
+        // ✅ mark as seen
+        api.post("/api/messages/seen", {
+            user_id: selectedUser.id,
+        });
+    }, [selectedUser]);
+
+    useEffect(() => {
+        if (!user) return;
+
+        echo.channel(`chat.${user.id}`)
+            .listen(".MessageSeen", () => {
+                console.log("👀 Seen update");
+
+                setMessages((prev) =>
+                    prev.map((msg) =>
+                        msg.sender_id === user.id
+                            ? { ...msg, read_at: new Date().toISOString() }
+                            : msg
+                    )
+                );
+            });
+
+    }, [user]);
+
     return (
         <div className="flex h-screen bg-[#0f172a] text-white">
             {/* Sidebar */}
@@ -217,10 +250,7 @@ export default function Chat() {
                                 return (
                                     <div
                                         key={msg.id}
-                                        className={`flex ${isMe
-                                            ? "justify-end"
-                                            : "justify-start"
-                                            }`}
+                                        className={`flex ${isMe ? "justify-end" : "justify-start"}`}
                                     >
                                         {!isMe && (
                                             <div className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center text-xs mr-2">
@@ -228,13 +258,26 @@ export default function Chat() {
                                             </div>
                                         )}
 
-                                        <div
-                                            className={`px-4 py-2 rounded-2xl max-w-xs text-sm ${isMe
-                                                ? "bg-blue-600 text-white"
-                                                : "bg-gray-800 text-gray-200"
-                                                }`}
-                                        >
-                                            {msg.message}
+                                        <div className="max-w-xs">
+                                            <div
+                                                className={`px-4 py-2 rounded-2xl text-sm ${isMe
+                                                    ? "bg-blue-600 text-white"
+                                                    : "bg-gray-800 text-gray-200"
+                                                    }`}
+                                            >
+                                                {msg.message}
+                                            </div>
+
+                                            {/* ✅ STATUS (FIXED POSITION) */}
+                                            {isMe && (
+                                                <p className="text-[10px] text-gray-400 mt-1 text-right">
+                                                    {msg.read_at
+                                                        ? "✔✔ Seen"
+                                                        : msg.delivered_at
+                                                            ? "✔✔ Delivered"
+                                                            : "✔ Sent"}
+                                                </p>
+                                            )}
                                         </div>
                                     </div>
                                 );
