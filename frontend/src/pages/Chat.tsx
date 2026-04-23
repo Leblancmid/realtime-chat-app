@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { api } from "@/api/axios";
+import echo from "@/echo";
+import { useAuth } from "@/context/AuthContext";
 
 type User = {
     id: number;
@@ -33,6 +35,24 @@ export default function Chat() {
             .get(`/api/messages/${selectedUser.id}`)
             .then((res) => setMessages(res.data));
     }, [selectedUser]);
+
+    const { user } = useAuth();
+
+    useEffect(() => {
+        if (!user) return;
+
+        console.log("Echo instance:", echo);
+
+        echo.channel(`chat.${user.id}`)
+            .listen("MessageSent", (e: any) => {
+                console.log("🔥 REALTIME EVENT:", e);
+                setMessages((prev) => [...prev, e.message]);
+            });
+
+        return () => {
+            echo.leave(`chat.${user.id}`);
+        };
+    }, [user]);
 
     const sendMessage = async () => {
         if (!selectedUser || !text) return;
