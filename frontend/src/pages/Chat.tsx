@@ -1,47 +1,115 @@
 import { useEffect, useState } from "react";
 import { api } from "@/api/axios";
 
+type User = {
+    id: number;
+    name: string;
+    email: string;
+};
+
 type Message = {
     id: number;
-    message: string;
     sender_id: number;
+    receiver_id: number;
+    message: string;
 };
 
 export default function Chat() {
+    const [users, setUsers] = useState<User[]>([]);
+    const [selectedUser, setSelectedUser] = useState<User | null>(null);
     const [messages, setMessages] = useState<Message[]>([]);
     const [text, setText] = useState("");
 
-    const userId = 1; // temp target user
+    // 🔹 Load users
+    useEffect(() => {
+        api.get("/api/users").then((res) => setUsers(res.data));
+    }, []);
 
-    const fetchMessages = async () => {
-        const res = await api.get(`/api/messages/${userId}`);
-        setMessages(res.data);
-    };
+    // 🔹 Load messages when user selected
+    useEffect(() => {
+        if (!selectedUser) return;
+
+        api
+            .get(`/api/messages/${selectedUser.id}`)
+            .then((res) => setMessages(res.data));
+    }, [selectedUser]);
 
     const sendMessage = async () => {
+        if (!selectedUser || !text) return;
+
         await api.post("/api/messages", {
-            receiver_id: userId,
+            receiver_id: selectedUser.id,
             message: text,
         });
 
         setText("");
-        fetchMessages();
+
+        const res = await api.get(`/api/messages/${selectedUser.id}`);
+        setMessages(res.data);
     };
 
-    useEffect(() => {
-        fetchMessages();
-    }, []);
-
     return (
-        <div>
-            <div>
-                {messages.map((m) => (
-                    <p key={m.id}>{m.message}</p>
+        <div className="flex h-screen">
+            {/* Sidebar */}
+            <div className="w-1/4 bg-white border-r">
+                <h2 className="p-4 font-bold border-b">Users</h2>
+                {users.map((user) => (
+                    <div
+                        key={user.id}
+                        onClick={() => setSelectedUser(user)}
+                        className={`p-3 cursor-pointer hover:bg-gray-100 ${selectedUser?.id === user.id ? "bg-gray-200" : ""
+                            }`}
+                    >
+                        {user.name}
+                    </div>
                 ))}
             </div>
 
-            <input value={text} onChange={(e) => setText(e.target.value)} />
-            <button onClick={sendMessage}>Send</button>
+            {/* Chat Area */}
+            <div className="flex-1 flex flex-col">
+                {selectedUser ? (
+                    <>
+                        <div className="p-4 border-b font-bold">
+                            {selectedUser.name}
+                        </div>
+
+                        {/* Messages */}
+                        <div className="flex-1 p-4 overflow-y-auto space-y-2">
+                            {messages.map((msg) => (
+                                <div
+                                    key={msg.id}
+                                    className={`p-2 rounded max-w-xs ${msg.sender_id === selectedUser.id
+                                        ? "bg-gray-200"
+                                        : "bg-blue-500 text-white ml-auto"
+                                        }`}
+                                >
+                                    {msg.message}
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Input */}
+                        <div className="p-4 border-t flex gap-2">
+                            <input
+                                value={text}
+                                onChange={(e) => setText(e.target.value)}
+                                className="flex-1 border p-2 rounded"
+                                placeholder="Type a message..."
+                            />
+                            <button
+                                onClick={sendMessage}
+                                className="bg-blue-500 text-white px-4 rounded"
+                            >
+                                Send
+                            </button>
+                        </div>
+                    </>
+                ) : (
+                    <div className="flex items-center justify-center h-full text-gray-500">
+                        Select a user to start chatting
+                    </div>
+                )}
+            </div>
         </div>
     );
 }

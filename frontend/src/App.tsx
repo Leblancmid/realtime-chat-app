@@ -7,6 +7,8 @@ import Dashboard from "@/pages/Dashboard";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import GuestRoute from "@/components/GuestRoute";
 
+import Chat from "@/pages/Chat";
+
 function App() {
   return (
     <BrowserRouter>
@@ -37,6 +39,16 @@ function App() {
             </ProtectedRoute>
           }
         />
+
+        <Route
+          path="/chat"
+          element={
+            <ProtectedRoute>
+              <Chat />
+            </ProtectedRoute>
+          }
+        />
+
       </Routes>
     </BrowserRouter>
   );
