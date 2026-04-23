@@ -49,20 +49,34 @@ export default function Login() {
     };
 
     return (
-        <form onSubmit={handleLogin}>
-            <h2>Login</h2>
+        <div className="min-h-screen flex items-center justify-center bg-gray-100">
+            <form
+                onSubmit={handleLogin}
+                className="bg-white p-6 rounded shadow-md w-80"
+            >
+                <h2 className="text-xl font-bold mb-4">Login</h2>
 
-            <input name="email" placeholder="Email" onChange={handleChange} />
-            <input
-                type="password"
-                name="password"
-                placeholder="Password"
-                onChange={handleChange}
-            />
+                <input
+                    name="email"
+                    placeholder="Email"
+                    className="w-full mb-3 p-2 border rounded"
+                    onChange={handleChange}
+                />
 
-            {error && <p>{error}</p>}
+                <input
+                    type="password"
+                    name="password"
+                    placeholder="Password"
+                    className="w-full mb-3 p-2 border rounded"
+                    onChange={handleChange}
+                />
 
-            <button type="submit">Login</button>
-        </form>
+                {error && <p className="text-red-500 text-sm">{error}</p>}
+
+                <button className="w-full bg-blue-500 text-white p-2 rounded">
+                    Login
+                </button>
+            </form>
+        </div>
     );
 }

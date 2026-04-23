@@ -1,5 +1,4 @@
-import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
-import { useAuth } from "@/context/AuthContext";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 import Register from "@/pages/Register";
 import Login from "@/pages/Login";
@@ -9,28 +8,8 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import GuestRoute from "@/components/GuestRoute";
 
 function App() {
-  const { user, logout } = useAuth();
-
   return (
     <BrowserRouter>
-      <nav style={{ marginBottom: "20px" }}>
-        {!user ? (
-          <>
-            <Link to="/register">Register</Link> |{" "}
-            <Link to="/login">Login</Link>
-          </>
-        ) : (
-          <>
-            <Link to="/dashboard">Dashboard</Link> |{" "}
-            <button onClick={logout} style={{ marginLeft: "10px" }}>
-              Logout
-            </button>
-          </>
-        )}
-      </nav>
-
-      {user && <p>Logged in as {user.name}</p>}
-
       <Routes>
         <Route
           path="/register"

@@ -1,13 +1,10 @@
-import { useAuth } from "../context/AuthContext";
+import Layout from "@/components/Layout";
 
 export default function Dashboard() {
-    const { user, logout } = useAuth();
-
     return (
-        <div>
-            <h1>Dashboard</h1>
-            <p>Welcome {user?.name}</p>
-            <button onClick={logout}>Logout</button>
-        </div>
+        <Layout>
+            <h1 className="text-2xl font-bold">Dashboard</h1>
+            <p className="mt-2 text-gray-600">Welcome to your dashboard.</p>
+        </Layout>
     );
 }
