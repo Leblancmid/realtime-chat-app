@@ -147,30 +147,43 @@ export default function Chat() {
     };
 
     return (
-        <div className="flex h-screen bg-gray-100">
+        <div className="flex h-screen bg-[#0f172a] text-white">
             {/* Sidebar */}
-            <div className="w-1/4 bg-white border-r">
-                <h2 className="p-4 font-bold border-b">Users</h2>
+            <div className="w-72 bg-[#020817] border-r border-gray-800">
+                <div className="p-4 font-semibold border-b border-gray-800">
+                    Messages
+                </div>
 
-                {users.map((u) => (
-                    <div
-                        key={u.id}
-                        onClick={() => setSelectedUser(u)}
-                        className={`p-3 cursor-pointer flex items-center gap-2 ${selectedUser?.id === u.id
-                            ? "bg-blue-100"
-                            : "hover:bg-gray-100"
-                            }`}
-                    >
-                        {/* 🟢 Online indicator */}
-                        <span
-                            className={`w-2 h-2 rounded-full ${u.is_online
-                                ? "bg-green-500"
-                                : "bg-gray-400"
+                <div className="p-2 space-y-1">
+                    {users.map((u) => (
+                        <div
+                            key={u.id}
+                            onClick={() => setSelectedUser(u)}
+                            className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition ${selectedUser?.id === u.id
+                                ? "bg-gray-800"
+                                : "hover:bg-gray-800/60"
                                 }`}
-                        />
-                        {u.name}
-                    </div>
-                ))}
+                        >
+                            {/* Avatar */}
+                            <div className="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center text-sm">
+                                {u.name[0]}
+                            </div>
+
+                            <div className="flex-1">
+                                <p className="text-sm font-medium">{u.name}</p>
+                                <p className="text-xs text-gray-400">
+                                    {u.is_online ? "Online" : "Offline"}
+                                </p>
+                            </div>
+
+                            {/* Online dot */}
+                            <span
+                                className={`w-2 h-2 rounded-full ${u.is_online ? "bg-green-500" : "bg-gray-500"
+                                    }`}
+                            />
+                        </div>
+                    ))}
+                </div>
             </div>
 
             {/* Chat Area */}
@@ -178,46 +191,25 @@ export default function Chat() {
                 {selectedUser ? (
                     <>
                         {/* Header */}
-                        <div className="p-4 border-b bg-white">
-                            <div className="font-bold">
-                                {selectedUser.name}
+                        <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-800 bg-[#020817]">
+                            <div className="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center">
+                                {selectedUser.name[0]}
                             </div>
 
-                            <div className="flex items-center gap-2 text-sm text-gray-400">
-                                <span
-                                    className={`w-2 h-2 rounded-full ${selectedUser?.is_online
-                                        ? "bg-green-500"
-                                        : "bg-gray-400"
-                                        }`}
-                                />
-                                {selectedUser?.is_online
-                                    ? "Online"
-                                    : "Offline"}
+                            <div>
+                                <p className="font-medium">{selectedUser.name}</p>
+                                <p className="text-xs text-gray-400">
+                                    {selectedUser.is_online
+                                        ? "Online"
+                                        : "Offline"}
+                                </p>
                             </div>
-                        </div>
-
-                        {/* Typing indicator */}
-                        <div className="px-4 h-6 flex items-center">
-                            {typingUser === selectedUser.id && (
-                                <div className="flex items-center gap-1 text-gray-400 text-sm">
-                                    <span>
-                                        {selectedUser.name} is typing
-                                    </span>
-                                    <span className="animate-bounce">.</span>
-                                    <span className="animate-bounce delay-150">
-                                        .
-                                    </span>
-                                    <span className="animate-bounce delay-300">
-                                        .
-                                    </span>
-                                </div>
-                            )}
                         </div>
 
                         {/* Messages */}
                         <div
                             ref={chatRef}
-                            className="flex-1 p-4 overflow-y-auto space-y-2"
+                            className="flex-1 overflow-y-auto px-6 py-4 space-y-4"
                         >
                             {messages.map((msg) => {
                                 const isMe = msg.sender_id === user?.id;
@@ -230,10 +222,16 @@ export default function Chat() {
                                             : "justify-start"
                                             }`}
                                     >
+                                        {!isMe && (
+                                            <div className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center text-xs mr-2">
+                                                {selectedUser.name[0]}
+                                            </div>
+                                        )}
+
                                         <div
-                                            className={`px-4 py-2 rounded-2xl max-w-xs ${isMe
-                                                ? "bg-blue-500 text-white"
-                                                : "bg-gray-200 text-black"
+                                            className={`px-4 py-2 rounded-2xl max-w-xs text-sm ${isMe
+                                                ? "bg-blue-600 text-white"
+                                                : "bg-gray-800 text-gray-200"
                                                 }`}
                                         >
                                             {msg.message}
@@ -241,26 +239,35 @@ export default function Chat() {
                                     </div>
                                 );
                             })}
+
+                            {/* Typing */}
+                            {typingUser === selectedUser.id && (
+                                <div className="text-sm text-gray-400">
+                                    {selectedUser.name} is typing...
+                                </div>
+                            )}
                         </div>
 
                         {/* Input */}
-                        <div className="p-4 border-t flex gap-2 bg-white">
-                            <input
-                                value={text}
-                                onChange={(e) => {
-                                    setText(e.target.value);
-                                    handleTyping();
-                                }}
-                                className="flex-1 border px-4 py-2 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-400"
-                                placeholder="Type a message..."
-                            />
+                        <div className="px-6 py-4 border-t border-gray-800 bg-[#020817]">
+                            <div className="flex items-center gap-2 bg-gray-800 px-4 py-2 rounded-full">
+                                <input
+                                    value={text}
+                                    onChange={(e) => {
+                                        setText(e.target.value);
+                                        handleTyping();
+                                    }}
+                                    className="flex-1 bg-transparent outline-none text-sm"
+                                    placeholder="Message..."
+                                />
 
-                            <button
-                                onClick={sendMessage}
-                                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-full"
-                            >
-                                Send
-                            </button>
+                                <button
+                                    onClick={sendMessage}
+                                    className="bg-blue-600 hover:bg-blue-700 px-4 py-1 rounded-full text-sm transition"
+                                >
+                                    Send
+                                </button>
+                            </div>
                         </div>
                     </>
                 ) : (
