@@ -22,16 +22,18 @@ export default function Chat() {
     const [selectedUser, setSelectedUser] = useState<User | null>(null);
     const [messages, setMessages] = useState<Message[]>([]);
     const [text, setText] = useState("");
+    const [typingUser, setTypingUser] = useState<number | null>(null);
 
     const { user } = useAuth();
     const bottomRef = useRef<HTMLDivElement | null>(null);
+    const typingTimeout = useRef<any>(null);
 
     // 🔹 Load users
     useEffect(() => {
         api.get("/api/users").then((res) => setUsers(res.data));
     }, []);
 
-    // 🔹 Load messages when selecting user
+    // 🔹 Load messages
     useEffect(() => {
         if (!selectedUser) return;
 
@@ -40,19 +42,30 @@ export default function Chat() {
             .then((res) => setMessages(res.data));
     }, [selectedUser]);
 
-    // 🔥 Realtime listener (FIXED)
+    // 🔥 Realtime listener (messages + typing)
     useEffect(() => {
         if (!user) return;
 
         const channel = echo.channel(`chat.${user.id}`);
 
+        // MESSAGE
         channel.listen(".MessageSent", (e: any) => {
             console.log("🔥 REALTIME EVENT:", e);
 
-            // only append if currently chatting with sender
             if (selectedUser && e.message.sender_id === selectedUser.id) {
                 setMessages((prev) => [...prev, e.message]);
             }
+        });
+
+        // 🔥 TYPING
+        channel.listen(".UserTyping", (e: any) => {
+            console.log("🔥 TYPING EVENT:", e);
+
+            setTypingUser(e.senderId);
+
+            setTimeout(() => {
+                setTypingUser(null);
+            }, 1500);
         });
 
         return () => {
@@ -60,12 +73,42 @@ export default function Chat() {
         };
     }, [user, selectedUser]);
 
-    // 🔥 Auto scroll
+    // 🔹 Auto scroll
     useEffect(() => {
         bottomRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
 
-    // 🔹 Send message (FIXED)
+    // 🔥 Typing handler
+    const handleTyping = async () => {
+        console.log("Typing triggered");
+
+        if (!selectedUser) {
+            console.log("❌ No selected user");
+            return;
+        }
+
+        console.log("✅ Sending typing to:", selectedUser.id);
+
+        if (typingTimeout.current) {
+            clearTimeout(typingTimeout.current);
+        }
+
+        try {
+            await api.get("/sanctum/csrf-cookie");
+
+            await api.post("/api/typing", {
+                receiver_id: selectedUser.id,
+            });
+
+            console.log("✅ Typing API success");
+        } catch (err) {
+            console.error("❌ Typing API error:", err);
+        }
+
+        typingTimeout.current = setTimeout(() => { }, 1000);
+    };
+
+    // 🔹 Send message
     const sendMessage = async () => {
         if (!selectedUser || !text.trim()) return;
 
@@ -74,32 +117,28 @@ export default function Chat() {
             message: text,
         });
 
-        // ✅ update UI instantly for sender
         setMessages((prev) => [...prev, res.data]);
-
         setText("");
     };
 
     return (
         <div className="flex h-screen bg-gray-100">
             {/* Sidebar */}
-            <div className="w-1/4 bg-white border-r flex flex-col">
+            <div className="w-1/4 bg-white border-r">
                 <h2 className="p-4 font-bold border-b">Users</h2>
 
-                <div className="flex-1 overflow-y-auto">
-                    {users.map((u) => (
-                        <div
-                            key={u.id}
-                            onClick={() => setSelectedUser(u)}
-                            className={`p-3 cursor-pointer transition 
-                            ${selectedUser?.id === u.id
-                                    ? "bg-blue-100 font-semibold"
-                                    : "hover:bg-gray-100"}`}
-                        >
-                            {u.name}
-                        </div>
-                    ))}
-                </div>
+                {users.map((u) => (
+                    <div
+                        key={u.id}
+                        onClick={() => setSelectedUser(u)}
+                        className={`p-3 cursor-pointer ${selectedUser?.id === u.id
+                            ? "bg-blue-100"
+                            : "hover:bg-gray-100"
+                            }`}
+                    >
+                        {u.name}
+                    </div>
+                ))}
             </div>
 
             {/* Chat Area */}
@@ -107,10 +146,17 @@ export default function Chat() {
                 {selectedUser ? (
                     <>
                         {/* Header */}
-                        <div className="p-4 border-b bg-white font-semibold shadow-sm">
+                        <div className="p-4 border-b font-bold bg-white">
                             Chat with {selectedUser.name}
                         </div>
 
+                        <div className="px-4 h-6">
+                            {typingUser === selectedUser?.id && (
+                                <p className="text-sm text-gray-400 italic animate-pulse">
+                                    {selectedUser.name} is typing...
+                                </p>
+                            )}
+                        </div>
                         {/* Messages */}
                         <div className="flex-1 p-4 overflow-y-auto space-y-2">
                             {messages.map((msg) => {
@@ -119,21 +165,18 @@ export default function Chat() {
                                 return (
                                     <div
                                         key={msg.id}
-                                        className={`flex ${isMe ? "justify-end" : "justify-start"}`}
+                                        className={`flex ${isMe
+                                            ? "justify-end"
+                                            : "justify-start"
+                                            }`}
                                     >
                                         <div
-                                            className={`
-                                            px-4 py-2 rounded-2xl max-w-xs
-                                            ${isMe
-                                                    ? "bg-blue-500 text-white rounded-br-none"
-                                                    : "bg-gray-200 text-gray-800 rounded-bl-none"}
-                                        `}
+                                            className={`px-4 py-2 rounded-2xl max-w-xs ${isMe
+                                                ? "bg-blue-500 text-white"
+                                                : "bg-gray-200 text-black"
+                                                }`}
                                         >
                                             {msg.message}
-
-                                            <div className="text-xs mt-1 opacity-70 text-right">
-                                                {new Date(msg.created_at).toLocaleTimeString()}
-                                            </div>
                                         </div>
                                     </div>
                                 );
@@ -146,21 +189,24 @@ export default function Chat() {
                         <div className="p-4 border-t flex gap-2 bg-white">
                             <input
                                 value={text}
-                                onChange={(e) => setText(e.target.value)}
-                                className="flex-1 border px-4 py-2 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-400"
+                                onChange={(e) => {
+                                    setText(e.target.value);
+                                    handleTyping();
+                                }}
+                                className="flex-1 border px-4 py-2 rounded-full"
                                 placeholder="Type a message..."
                             />
                             <button
                                 onClick={sendMessage}
-                                className="bg-blue-500 hover:bg-blue-600 text-white px-5 py-2 rounded-full transition"
+                                className="bg-blue-500 text-white px-4 rounded-full"
                             >
                                 Send
                             </button>
                         </div>
                     </>
                 ) : (
-                    <div className="flex items-center justify-center h-full text-gray-400 text-lg">
-                        💬 Select a user to start chatting
+                    <div className="flex items-center justify-center h-full text-gray-500">
+                        Select a user to start chatting
                     </div>
                 )}
             </div>

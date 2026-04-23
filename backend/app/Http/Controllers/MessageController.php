@@ -6,6 +6,8 @@ use App\Models\Message;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Events\MessageSent; // 🔥 ADD THIS
+use App\Events\UserTyping; // 🔥 ADD THIS
+
 
 class MessageController extends Controller
 {
