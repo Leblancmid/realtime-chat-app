@@ -4,6 +4,7 @@ use App\Http\Controllers\MessageController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 
 Route::middleware('auth:sanctum')->group(function () {
 
@@ -23,5 +24,18 @@ Route::middleware('auth:sanctum')->group(function () {
             Auth::id(),           // sender
             $request->receiver_id // receiver
         ));
+    });
+
+    Route::post('/online', function () {
+        Cache::put('user-online-' . Auth::id(), true, now()->addSeconds(10));
+    });
+
+    Route::get('/users', function () {
+        return \App\Models\User::where('id', '!=', Auth::id())
+            ->get()
+            ->map(function ($user) {
+                $user->is_online = Cache::has('user-online-' . $user->id);
+                return $user;
+            });
     });
 });
