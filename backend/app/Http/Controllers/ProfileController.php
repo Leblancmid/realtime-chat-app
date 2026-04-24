@@ -2,18 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\ProfileRequest;
 use Illuminate\Http\Request;
 
 class ProfileController extends Controller
 {
-    public function update(Request $request)
+    public function update(ProfileRequest $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'avatar' => 'nullable|image|max:2048',
-        ]);
-
-        $user = $request->user(); // ✅ properly typed (no IDE error)
+        $user = $request->user();
 
         if ($request->hasFile('avatar')) {
             $path = $request->file('avatar')->store('avatars', 'public');
