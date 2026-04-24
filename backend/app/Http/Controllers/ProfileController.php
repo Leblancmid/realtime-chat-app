@@ -14,12 +14,12 @@ class ProfileController extends Controller
 
         if ($request->hasFile('avatar')) {
             $path = $request->file('avatar')->store('avatars', 'public');
-            $user->avatar = '/storage/' . $path;
+            $user->avatar = asset('storage/' . $path);
         }
 
         if ($request->hasFile('banner')) {
             $path = $request->file('banner')->store('banners', 'public');
-            $user->banner = '/storage/' . $path;
+            $user->banner = asset('storage/' . $path);
         }
 
         $user->name = $request->name;
