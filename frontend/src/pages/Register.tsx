@@ -4,12 +4,7 @@ import { api } from "@/api/axios";
 import { useAuth } from "@/context/AuthContext";
 import { useNavigate } from "react-router-dom";
 
-type RegisterForm = {
-    name: string;
-    email: string;
-    password: string;
-    password_confirmation: string;
-};
+import type { RegisterForm } from "@/types";
 
 type Errors = {
     [key: string]: string[];

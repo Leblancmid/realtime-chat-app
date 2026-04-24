@@ -4,10 +4,7 @@ import { api } from "../api/axios";
 import { useAuth } from "@/context/AuthContext";
 import { useNavigate } from "react-router-dom";
 
-type LoginForm = {
-    email: string;
-    password: string;
-};
+import type { LoginForm } from "@/types";
 
 export default function Login() {
 

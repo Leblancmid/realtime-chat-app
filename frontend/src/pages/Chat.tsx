@@ -2,23 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { api } from "@/api/axios";
 import echo from "@/echo";
 import { useAuth } from "@/context/AuthContext";
-
-type User = {
-    id: number;
-    name: string;
-    email: string;
-    is_online?: boolean;
-};
-
-type Message = {
-    id: number;
-    sender_id: number;
-    receiver_id: number;
-    message: string;
-    created_at: string;
-    delivered_at?: string;
-    read_at?: string;
-};
+import type { User, Message } from "@/types";
 
 export default function Chat() {
     const [users, setUsers] = useState<User[]>([]);

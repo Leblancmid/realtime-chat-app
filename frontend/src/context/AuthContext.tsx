@@ -1,14 +1,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { api } from "../api/axios";
-
-type User = {
-    id: number;
-    name: string;
-    email: string;
-    is_online?: boolean;
-    avatar?: string; // ✅ ADD THIS
-};
+import type { User } from "@/types";
 
 type AuthContextType = {
     user: User | null;
