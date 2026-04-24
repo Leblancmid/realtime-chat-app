@@ -53,14 +53,20 @@ export default function ProfileModal({ onClose }: any) {
     };
 
     return (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-            <div className="w-[800px] h-[500px] bg-[#1e1f22] rounded-xl flex overflow-hidden">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+            <div className="w-[900px] h-[550px] bg-[#1e1f22] rounded-2xl flex overflow-hidden shadow-2xl relative">
 
                 {/* Sidebar */}
-                <div className="w-52 bg-[#2b2d31] p-4 space-y-2">
+                <div className="w-56 bg-[#2b2d31] p-4 flex flex-col">
+                    <h2 className="text-xs text-gray-400 uppercase mb-3 px-2">
+                        User Settings
+                    </h2>
+
                     <button
                         onClick={() => setTab("profile")}
-                        className={`block w-full text-left px-3 py-2 rounded ${tab === "profile" ? "bg-gray-700" : "hover:bg-gray-700"
+                        className={`px-3 py-2 rounded-md text-sm text-left transition ${tab === "profile"
+                            ? "bg-gray-700 text-white"
+                            : "text-gray-400 hover:bg-gray-700 hover:text-white"
                             }`}
                     >
                         Profile
@@ -68,7 +74,9 @@ export default function ProfileModal({ onClose }: any) {
 
                     <button
                         onClick={() => setTab("password")}
-                        className={`block w-full text-left px-3 py-2 rounded ${tab === "password" ? "bg-gray-700" : "hover:bg-gray-700"
+                        className={`px-3 py-2 rounded-md text-sm text-left transition ${tab === "password"
+                            ? "bg-gray-700 text-white"
+                            : "text-gray-400 hover:bg-gray-700 hover:text-white"
                             }`}
                     >
                         Password
@@ -78,15 +86,19 @@ export default function ProfileModal({ onClose }: any) {
                 {/* Content */}
                 <div className="flex-1 p-6 overflow-y-auto">
                     {tab === "profile" && (
-                        <>
+                        <div className="space-y-6 px-2">
                             {/* Banner */}
-                            <div className="h-32 bg-gray-800 rounded-lg relative overflow-hidden">
+                            <div className="relative h-36 rounded-xl overflow-hidden bg-gradient-to-r from-blue-600 to-purple-600 group cursor-pointer">
                                 {previewBanner && (
                                     <img
                                         src={previewBanner}
                                         className="w-full h-full object-cover"
                                     />
                                 )}
+
+                                <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 flex items-center justify-center text-sm">
+                                    Change Banner
+                                </div>
 
                                 <input
                                     type="file"
@@ -101,18 +113,22 @@ export default function ProfileModal({ onClose }: any) {
                             </div>
 
                             {/* Avatar */}
-                            <div className="-mt-10 mb-4">
-                                <div className="w-20 h-20 rounded-full border-4 border-[#1e1f22] overflow-hidden relative cursor-pointer">
+                            <div className="-mt-16 flex items-center gap-4 px-2">
+                                <div className="w-24 h-24 rounded-full border-4 border-[#1e1f22] overflow-hidden relative shrink-0 group cursor-pointer">
                                     {previewAvatar ? (
                                         <img
                                             src={previewAvatar}
                                             className="w-full h-full object-cover"
                                         />
                                     ) : (
-                                        <div className="bg-gray-700 w-full h-full flex items-center justify-center">
+                                        <div className="bg-gray-700 w-full h-full flex items-center justify-center text-xl">
                                             {user?.name?.[0]}
                                         </div>
                                     )}
+
+                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-xs">
+                                        Change
+                                    </div>
 
                                     <input
                                         type="file"
@@ -125,56 +141,86 @@ export default function ProfileModal({ onClose }: any) {
                                         className="absolute inset-0 opacity-0 cursor-pointer"
                                     />
                                 </div>
+
+                                <div className="py-10">
+                                    <p className="text-lg font-semibold leading-tight">
+                                        {user?.name}
+                                    </p>
+                                    <p className="text-sm text-gray-400 leading-tight">
+                                        {user?.email}
+                                    </p>
+                                </div>
                             </div>
 
-                            {/* Name */}
-                            <input
-                                value={name}
-                                onChange={(e) => setName(e.target.value)}
-                                className="w-full bg-gray-800 p-3 rounded mb-4"
-                            />
+                            {/* Name Input */}
+                            <div>
+                                <label className="text-xs text-gray-400 uppercase">
+                                    Display Name
+                                </label>
+                                <input
+                                    value={name}
+                                    onChange={(e) => setName(e.target.value)}
+                                    className="w-full mt-2 px-4 py-3 bg-gray-800 border border-gray-700 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                />
+                            </div>
 
-                            <button
-                                onClick={updateProfile}
-                                className="bg-blue-600 px-4 py-2 rounded"
-                            >
-                                {loading ? "Saving..." : "Save Changes"}
-                            </button>
-                        </>
+                            {/* Save */}
+                            <div className="flex justify-end pt-2">
+                                <button
+                                    onClick={updateProfile}
+                                    className="bg-blue-600 hover:bg-blue-700 px-5 py-2 rounded-lg transition"
+                                >
+                                    {loading ? "Saving..." : "Save Changes"}
+                                </button>
+                            </div>
+                        </div>
                     )}
 
                     {tab === "password" && (
-                        <div className="space-y-4">
+                        <div className="space-y-5 max-w-md">
+                            <h2 className="text-lg font-semibold">
+                                Change Password
+                            </h2>
+
                             <input
                                 type="password"
                                 placeholder="Current password"
                                 onChange={(e) =>
-                                    setPasswords({ ...passwords, current: e.target.value })
+                                    setPasswords({
+                                        ...passwords,
+                                        current: e.target.value,
+                                    })
                                 }
-                                className="w-full bg-gray-800 p-3 rounded"
+                                className="w-full bg-gray-800 border border-gray-700 p-3 rounded-lg"
                             />
 
                             <input
                                 type="password"
                                 placeholder="New password"
                                 onChange={(e) =>
-                                    setPasswords({ ...passwords, new: e.target.value })
+                                    setPasswords({
+                                        ...passwords,
+                                        new: e.target.value,
+                                    })
                                 }
-                                className="w-full bg-gray-800 p-3 rounded"
+                                className="w-full bg-gray-800 border border-gray-700 p-3 rounded-lg"
                             />
 
                             <input
                                 type="password"
                                 placeholder="Confirm password"
                                 onChange={(e) =>
-                                    setPasswords({ ...passwords, confirm: e.target.value })
+                                    setPasswords({
+                                        ...passwords,
+                                        confirm: e.target.value,
+                                    })
                                 }
-                                className="w-full bg-gray-800 p-3 rounded"
+                                className="w-full bg-gray-800 border border-gray-700 p-3 rounded-lg"
                             />
 
                             <button
                                 onClick={updatePassword}
-                                className="bg-red-600 px-4 py-2 rounded"
+                                className="bg-red-600 hover:bg-red-700 px-5 py-2 rounded-lg"
                             >
                                 Update Password
                             </button>
@@ -185,7 +231,7 @@ export default function ProfileModal({ onClose }: any) {
                 {/* Close */}
                 <button
                     onClick={onClose}
-                    className="absolute top-4 right-4 text-gray-400 hover:text-white"
+                    className="absolute top-4 right-4 text-gray-400 hover:text-white text-lg"
                 >
                     ✕
                 </button>
