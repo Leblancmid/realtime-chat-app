@@ -4,6 +4,7 @@ import echo from "@/echo";
 import { useAuth } from "@/context/AuthContext";
 import type { User, Message } from "@/types";
 import { useNavigate } from "react-router-dom";
+import EmojiPicker from "emoji-picker-react";
 
 import {
     Image,
@@ -29,6 +30,8 @@ export default function Chat() {
 
     const [showGifPicker, setShowGifPicker] = useState(false);
     const [showStickerPicker, setShowStickerPicker] = useState(false);
+
+    const [showEmoji, setShowEmoji] = useState(false);
 
     // 🔹 Load users
     useEffect(() => {
@@ -401,9 +404,20 @@ export default function Chat() {
                                         placeholder="Aa"
                                     />
 
-                                    <button className="text-gray-400 hover:text-white">
+                                    <button onClick={() => setShowEmoji(!showEmoji)}>
                                         <Smile size={20} />
                                     </button>
+
+                                    {showEmoji && (
+                                        <div className="absolute bottom-20 right-4 z-50">
+                                            <EmojiPicker
+                                                onEmojiClick={(emojiData) => {
+                                                    setText((prev) => prev + emojiData.emoji);
+                                                }}
+                                                theme="dark"
+                                            />
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* RIGHT BUTTON */}
