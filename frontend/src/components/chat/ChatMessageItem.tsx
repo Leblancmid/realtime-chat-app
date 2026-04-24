@@ -5,6 +5,7 @@ type Props = {
     isMe: boolean;
     isLast: boolean;
     selectedUser: User;
+    onImageClick: (url: string) => void;
 };
 
 export default function ChatMessageItem({
@@ -12,6 +13,7 @@ export default function ChatMessageItem({
     isMe,
     isLast,
     selectedUser,
+    onImageClick,
 }: Props) {
 
     const BASE_URL = import.meta.env.VITE_API_URL;
@@ -43,9 +45,15 @@ export default function ChatMessageItem({
 
                         {msg.image && (
                             <img
-                                src={`${BASE_URL}${msg.image}`}
-                                className="max-w-[220px] rounded-lg cursor-pointer border border-gray-700"
-                                onClick={() => window.open(msg.image, "_blank")}
+                                src={msg.image.startsWith("http") ? msg.image : `${import.meta.env.VITE_API_URL}${msg.image}`}
+                                className="max-w-[220px] rounded-lg cursor-pointer hover:opacity-90 border border-gray-700"
+                                onClick={() =>
+                                    onImageClick(
+                                        msg.image.startsWith("http")
+                                            ? msg.image
+                                            : `${import.meta.env.VITE_API_URL}${msg.image}`
+                                    )
+                                }
                             />
                         )}
                     </div>

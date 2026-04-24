@@ -1,5 +1,6 @@
 import { Image, Mic, Smile, Send, Sparkles } from "lucide-react";
 import EmojiPickerWrapper from "./ChatPickers/EmojiPickerWrapper";
+import { useState } from "react";
 
 
 type Props = {
@@ -34,9 +35,30 @@ export default function ChatInput({
     showStickerPicker,
     setShowStickerPicker,
 }: Props) {
-    return (
-        <div className="px-4 py-3 border-t border-gray-800 bg-[#020817] relative">
 
+    const [isDragging, setIsDragging] = useState(false);
+
+    return (
+
+        <div
+            onDragOver={(e) => {
+                e.preventDefault();
+                setIsDragging(true);
+            }}
+            onDragLeave={() => setIsDragging(false)}
+            onDrop={(e) => {
+                e.preventDefault();
+                setIsDragging(false);
+
+                const file = e.dataTransfer.files?.[0];
+
+                if (file && file.type.startsWith("image/")) {
+                    setImage(file);
+                }
+            }}
+            className={`px-4 py-3 border-t border-gray-800 bg-[#020817] relative ${isDragging ? "bg-gray-800" : ""
+                }`}
+        >
             {/* IMAGE PREVIEW */}
             {image && (
                 <div className="mb-3 flex items-center gap-2">
