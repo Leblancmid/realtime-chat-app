@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\ProfileRequest;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 
 class ProfileController extends Controller
 {
@@ -16,9 +17,33 @@ class ProfileController extends Controller
             $user->avatar = '/storage/' . $path;
         }
 
+        if ($request->hasFile('banner')) {
+            $path = $request->file('banner')->store('banners', 'public');
+            $user->banner = '/storage/' . $path;
+        }
+
         $user->name = $request->name;
         $user->save();
 
         return response()->json($user);
+    }
+
+    public function changePassword(Request $request)
+    {
+        $request->validate([
+            'current' => 'required',
+            'new' => 'required|min:6|confirmed',
+        ]);
+
+        $user = $request->user();
+
+        if (!Hash::check($request->current, $user->password)) {
+            return response()->json(['error' => 'Wrong password'], 400);
+        }
+
+        $user->password = Hash::make($request->new);
+        $user->save();
+
+        return response()->json(['success' => true]);
     }
 }

@@ -47,4 +47,6 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     Route::post('/profile', [ProfileController::class, 'update']);
+
+    Route::post('/change-password', [ProfileController::class, 'changePassword']);
 });

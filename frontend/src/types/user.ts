@@ -4,4 +4,5 @@ export type User = {
     email: string;
     avatar?: string;
     is_online?: boolean;
+    banner?: string;
 };

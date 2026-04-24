@@ -3,10 +3,13 @@ import { LayoutDashboard, MessageCircle, Moon, Sun } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 
+import ProfileModal from "./ProfileModal";
+
 export default function Layout({ children }: any) {
     const [dark, setDark] = useState(false);
     const location = useLocation();
     const [open, setOpen] = useState(false);
+    const [openProfile, setOpenProfile] = useState(false);
     const { user } = useAuth();
 
     useEffect(() => {
@@ -86,12 +89,15 @@ export default function Layout({ children }: any) {
                         {/* Dropdown */}
                         {open && (
                             <div className="absolute bottom-14 left-0 w-full bg-gray-800 border border-gray-700 rounded-lg shadow-lg overflow-hidden">
-                                <a
-                                    href="/profile"
-                                    className="block px-4 py-2 text-sm hover:bg-gray-700"
+                                <button
+                                    onClick={() => {
+                                        setOpen(false); // close dropdown
+                                        setOpenProfile(true);
+                                    }}
+                                    className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-700"
                                 >
                                     Profile
-                                </a>
+                                </button>
 
                                 <button
                                     className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-700"
@@ -118,6 +124,11 @@ export default function Layout({ children }: any) {
             <div className="flex-1 overflow-y-auto p-6">
                 {children}
             </div>
+
+            {/* 🔥 PROFILE MODAL */}
+            {openProfile && (
+                <ProfileModal onClose={() => setOpenProfile(false)} />
+            )}
         </div>
     );
 }

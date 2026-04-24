@@ -4,7 +4,6 @@ import Register from "@/pages/Register";
 import Login from "@/pages/Login";
 import Dashboard from "@/pages/Dashboard";
 import Chat from "@/pages/Chat";
-import Profile from "@/pages/Profile";
 
 import ProtectedRoute from "@/components/ProtectedRoute";
 import GuestRoute from "@/components/GuestRoute";
@@ -35,7 +34,6 @@ function App() {
         <Route element={<ProtectedRoute />}>
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/chat" element={<Chat />} />
-          <Route path="/profile" element={<Profile />} />
         </Route>
 
         {/* 🔁 Redirect root */}
