@@ -13,6 +13,9 @@ export default function ChatMessageItem({
     isLast,
     selectedUser,
 }: Props) {
+
+    const BASE_URL = import.meta.env.VITE_API_URL;
+
     return (
         <div className={`flex gap-3 ${isMe ? "justify-end" : "justify-start"}`}>
             {!isMe && (
@@ -40,7 +43,7 @@ export default function ChatMessageItem({
 
                         {msg.image && (
                             <img
-                                src={`http://localhost${msg.image}`}
+                                src={`${BASE_URL}${msg.image}`}
                                 className="max-w-[220px] rounded-lg cursor-pointer border border-gray-700"
                                 onClick={() => window.open(msg.image, "_blank")}
                             />
