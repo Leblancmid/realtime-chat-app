@@ -14,7 +14,6 @@ import { useChat } from "@/hooks/useChat";
 export default function Chat() {
     const { user } = useAuth();
 
-    // 🔥 USE HOOK (THIS REPLACES ALL LOGIC)
     const {
         users,
         selectedUser,
@@ -30,7 +29,7 @@ export default function Chat() {
         sendGif,
     } = useChat(user);
 
-    // UI-only state (keep here)
+    // UI state
     const [showGifPicker, setShowGifPicker] = useState(false);
     const [showStickerPicker, setShowStickerPicker] = useState(false);
     const [showEmoji, setShowEmoji] = useState(false);
@@ -38,13 +37,15 @@ export default function Chat() {
     const [gifSearch, setGifSearch] = useState("");
     const [gifs, setGifs] = useState<string[]>([]);
 
+    const [isDragging, setIsDragging] = useState(false);
+
     const stickers = [
         "/stickers/happy.png",
         "/stickers/laugh.png",
         "/stickers/angry.png",
     ];
 
-    // 🔹 GIF FETCH (UI logic only)
+    // GIF fetch
     useEffect(() => {
         if (!showGifPicker) return;
 
@@ -52,9 +53,7 @@ export default function Chat() {
             const key = "LIVDSRZULELA";
 
             const url = gifSearch
-                ? `https://tenor.googleapis.com/v2/search?q=${encodeURIComponent(
-                    gifSearch
-                )}&key=${key}&limit=12`
+                ? `https://tenor.googleapis.com/v2/search?q=${encodeURIComponent(gifSearch)}&key=${key}&limit=12`
                 : `https://tenor.googleapis.com/v2/featured?key=${key}&limit=12`;
 
             const res = await fetch(url);
@@ -76,10 +75,27 @@ export default function Chat() {
         setGifSearch("");
     };
 
+    // 🔥 DRAG HANDLER (applies to WHOLE CHAT)
+    const handleDrop = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragging(false);
+
+        const files = Array.from(e.dataTransfer.files);
+
+        const images = files.filter((f) =>
+            f.type.startsWith("image/")
+        );
+
+        if (images.length > 0) {
+            setImage(images[0]); // single image for now
+        }
+    };
+
     return (
         <div className="flex h-screen bg-[#0f172a] text-white">
-            {/* Sidebar */}
-            <div className="w-72 bg-[#020817] border-r border-gray-800 rounded-l-xl">
+
+            {/* SIDEBAR */}
+            <div className="w-72 bg-[#020817] border-r border-gray-800">
                 <ChatSidebar
                     users={users}
                     selectedUser={selectedUser}
@@ -87,8 +103,17 @@ export default function Chat() {
                 />
             </div>
 
-            {/* Chat */}
-            <div className="flex-1 flex flex-col relative">
+            {/* CHAT AREA */}
+            <div
+                onDragOver={(e) => {
+                    e.preventDefault();
+                    setIsDragging(true);
+                }}
+                onDragLeave={() => setIsDragging(false)}
+                onDrop={handleDrop}
+                className={`flex-1 flex flex-col relative ${isDragging ? "bg-gray-800/40" : ""
+                    }`}
+            >
                 {selectedUser ? (
                     <>
                         <ChatHeader user={selectedUser} />
@@ -132,6 +157,15 @@ export default function Chat() {
                             showStickerPicker={showStickerPicker}
                             setShowStickerPicker={setShowStickerPicker}
                         />
+
+                        {/* 🔥 DRAG OVERLAY (Messenger style) */}
+                        {isDragging && (
+                            <div className="absolute inset-0 bg-black/50 flex items-center justify-center pointer-events-none">
+                                <div className="border-2 border-dashed border-white/40 p-10 rounded-xl text-lg">
+                                    Drop images to upload
+                                </div>
+                            </div>
+                        )}
                     </>
                 ) : (
                     <div className="flex items-center justify-center h-full text-gray-500">

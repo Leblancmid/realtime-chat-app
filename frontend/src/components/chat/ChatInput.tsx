@@ -1,24 +1,24 @@
 import { Image, Mic, Smile, Send, Sparkles } from "lucide-react";
 import EmojiPickerWrapper from "./ChatPickers/EmojiPickerWrapper";
-import { useState } from "react";
-
 
 type Props = {
     text: string;
     setText: React.Dispatch<React.SetStateAction<string>>;
     sendMessage: () => void;
+
     image: File | null;
-    setImage: (f: File | null) => void;
+    setImage: React.Dispatch<React.SetStateAction<File | null>>;
+
     handleTyping: () => void;
 
     showEmoji: boolean;
-    setShowEmoji: (v: boolean) => void;
+    setShowEmoji: React.Dispatch<React.SetStateAction<boolean>>;
 
     showGifPicker: boolean;
-    setShowGifPicker: (v: boolean) => void;
+    setShowGifPicker: React.Dispatch<React.SetStateAction<boolean>>;
 
     showStickerPicker: boolean;
-    setShowStickerPicker: (v: boolean) => void;
+    setShowStickerPicker: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
 export default function ChatInput({
@@ -35,51 +35,30 @@ export default function ChatInput({
     showStickerPicker,
     setShowStickerPicker,
 }: Props) {
-
-    const [isDragging, setIsDragging] = useState(false);
-
     return (
-
-        <div
-            onDragOver={(e) => {
-                e.preventDefault();
-                setIsDragging(true);
-            }}
-            onDragLeave={() => setIsDragging(false)}
-            onDrop={(e) => {
-                e.preventDefault();
-                setIsDragging(false);
-
-                const file = e.dataTransfer.files?.[0];
-
-                if (file && file.type.startsWith("image/")) {
-                    setImage(file);
-                }
-            }}
-            className={`px-4 py-3 border-t border-gray-800 bg-[#020817] relative ${isDragging ? "bg-gray-800" : ""
-                }`}
-        >
+        <div className="px-4 py-3 border-t border-gray-800 bg-[#020817] relative">
             {/* IMAGE PREVIEW */}
             {image && (
                 <div className="mb-3 flex items-center gap-2">
-                    <img
-                        src={URL.createObjectURL(image)}
-                        className="w-20 h-20 object-cover rounded-lg border border-gray-700"
-                    />
-                    <button
-                        onClick={() => setImage(null)}
-                        className="text-red-400 text-sm"
-                    >
-                        Remove
-                    </button>
+                    <div className="relative">
+                        <img
+                            src={URL.createObjectURL(image)}
+                            className="w-20 h-20 object-cover rounded-lg border border-gray-700"
+                        />
+
+                        <button
+                            onClick={() => setImage(null)}
+                            className="absolute -top-2 -right-2 bg-black text-white text-xs rounded-full px-1.5"
+                        >
+                            ✕
+                        </button>
+                    </div>
                 </div>
             )}
 
             <div className="flex items-center gap-3">
-
                 {/* LEFT ICONS */}
                 <div className="flex items-center gap-2 text-blue-500">
-
                     <button className="p-2 rounded-full hover:bg-gray-700">
                         <Mic size={20} />
                     </button>
@@ -143,6 +122,7 @@ export default function ChatInput({
                             setShowGifPicker(false);
                             setShowStickerPicker(false);
                         }}
+                        className="text-gray-400 hover:text-white"
                     >
                         <Smile size={20} />
                     </button>
@@ -153,8 +133,8 @@ export default function ChatInput({
                     onClick={sendMessage}
                     disabled={!text.trim() && !image}
                     className={`p-2 rounded-full ${text.trim() || image
-                        ? "bg-blue-600 hover:bg-blue-700"
-                        : "bg-gray-700 text-gray-400"
+                        ? "bg-blue-600 hover:bg-blue-700 text-white"
+                        : "bg-gray-700 text-gray-400 cursor-not-allowed"
                         }`}
                 >
                     <Send size={18} />
