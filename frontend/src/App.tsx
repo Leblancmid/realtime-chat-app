@@ -1,20 +1,19 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 import Register from "@/pages/Register";
 import Login from "@/pages/Login";
 import Dashboard from "@/pages/Dashboard";
+import Chat from "@/pages/Chat";
+import Profile from "@/pages/Profile";
 
 import ProtectedRoute from "@/components/ProtectedRoute";
 import GuestRoute from "@/components/GuestRoute";
-
-import Chat from "@/pages/Chat";
-
-import Profile from "@/pages/Profile";
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
+        {/* 🔓 Guest Routes */}
         <Route
           path="/register"
           element={
@@ -23,7 +22,6 @@ function App() {
             </GuestRoute>
           }
         />
-
         <Route
           path="/login"
           element={
@@ -33,33 +31,18 @@ function App() {
           }
         />
 
-        <Route
-          path="/dashboard"
-          element={
-            <ProtectedRoute>
-              <Dashboard />
-            </ProtectedRoute>
-          }
-        />
+        {/* 🔐 Protected Routes (grouped) */}
+        <Route element={<ProtectedRoute />}>
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/chat" element={<Chat />} />
+          <Route path="/profile" element={<Profile />} />
+        </Route>
 
-        <Route
-          path="/chat"
-          element={
-            <ProtectedRoute>
-              <Chat />
-            </ProtectedRoute>
-          }
-        />
+        {/* 🔁 Redirect root */}
+        <Route path="/" element={<Navigate to="/dashboard" />} />
 
-        <Route
-          path="/profile"
-          element={
-            <ProtectedRoute>
-              <Profile />
-            </ProtectedRoute>
-          }
-        />
-
+        {/* ❌ 404 fallback */}
+        <Route path="*" element={<div>404 Not Found</div>} />
       </Routes>
     </BrowserRouter>
   );

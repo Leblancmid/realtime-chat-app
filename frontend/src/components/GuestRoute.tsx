@@ -1,12 +1,12 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import type { ReactNode } from "react";
 
-export default function GuestRoute({ children }: { children: ReactNode }) {
-    const { user, loading } = useAuth();
+export default function GuestRoute({ children }: any) {
+    const { user } = useAuth();
 
-    if (loading) return <p>Loading...</p>;
-    if (user) return <Navigate to="/dashboard" />;
+    if (user) {
+        return <Navigate to="/dashboard" />;
+    }
 
     return children;
 }
