@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { api } from "@/api/axios";
 import { useAuth } from "@/context/AuthContext";
+import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 
 export default function ProfileModal({ onClose }: any) {
     const { user, setUser } = useAuth();
@@ -22,19 +24,37 @@ export default function ProfileModal({ onClose }: any) {
 
     const [loading, setLoading] = useState(false);
 
+    const navigate = useNavigate();
+
     const updateProfile = async () => {
-        setLoading(true);
+        try {
+            setLoading(true);
 
-        const formData = new FormData();
-        formData.append("name", name);
+            const formData = new FormData();
+            formData.append("name", name);
 
-        if (avatar) formData.append("avatar", avatar);
-        if (banner) formData.append("banner", banner);
+            if (avatar) formData.append("avatar", avatar);
+            if (banner) formData.append("banner", banner);
 
-        const res = await api.post("/api/profile", formData);
-        setUser(res.data);
+            const res = await api.post("/api/profile", formData, {
+                headers: { "Content-Type": "multipart/form-data" },
+            });
 
-        setLoading(false);
+            setUser(res.data);
+
+            toast.success("Profile updated successfully");
+
+            onClose(); // close modal
+
+            setTimeout(() => {
+                navigate("/dashboard");
+            }, 1000); // allow toast to show
+
+        } catch (err: any) {
+            toast.error("Failed to update profile");
+        } finally {
+            setLoading(false);
+        }
     };
 
     const updatePassword = async () => {

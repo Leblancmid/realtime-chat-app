@@ -8,9 +8,21 @@ import Chat from "@/pages/Chat";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import GuestRoute from "@/components/GuestRoute";
 
+import { Toaster } from "react-hot-toast";
+
 function App() {
   return (
     <BrowserRouter>
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          style: {
+            background: "#1e1f22",
+            color: "#fff",
+            border: "1px solid #333",
+          },
+        }}
+      />
       <Routes>
         {/* 🔓 Guest Routes */}
         <Route
