@@ -11,14 +11,17 @@ class MessageController extends Controller
 {
     public function index($userId)
     {
-        return Message::where(function ($q) use ($userId) {
+        $messages = Message::where(function ($q) use ($userId) {
             $q->where('sender_id', Auth::id())
                 ->where('receiver_id', $userId);
         })->orWhere(function ($q) use ($userId) {
             $q->where('sender_id', $userId)
                 ->where('receiver_id', Auth::id());
-        })->get();
+        })
+            ->orderBy('created_at') // ✅ IMPORTANT
+            ->get();
 
+        // ✅ mark delivered
         Message::where('receiver_id', Auth::id())
             ->where('sender_id', $userId)
             ->whereNull('delivered_at')
@@ -29,17 +32,36 @@ class MessageController extends Controller
 
     public function store(Request $request)
     {
-        $message = Message::create([
+        $request->validate([
+            'receiver_id' => 'required|exists:users,id',
+            'message' => 'nullable|string',
+            'image' => 'nullable', // supports file OR URL (gif)
+        ]);
+
+        $data = [
             'sender_id' => Auth::id(),
             'receiver_id' => $request->receiver_id,
             'message' => $request->message,
-        ]);
+        ];
 
-        // 👇 ADD IT HERE
+        // ✅ HANDLE IMAGE FILE UPLOAD
+        if ($request->hasFile('image')) {
+            $path = $request->file('image')->store('messages', 'public');
+            $data['image'] = '/storage/' . $path;
+        }
+
+        // ✅ HANDLE GIF / STICKER URL
+        if ($request->image && !$request->hasFile('image')) {
+            $data['image'] = $request->image;
+        }
+
+        $message = Message::create($data);
+
+        // debug log
         logger('Broadcast fired', ['message' => $message]);
 
-        // broadcast event
-        broadcast(new MessageSent($message));
+        // broadcast
+        broadcast(new MessageSent($message))->toOthers();
 
         return $message;
     }

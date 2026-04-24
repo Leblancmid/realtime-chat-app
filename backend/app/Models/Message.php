@@ -10,5 +10,8 @@ class Message extends Model
         'sender_id',
         'receiver_id',
         'message',
+        'image',
+        'delivered_at',
+        'read_at',
     ];
 }

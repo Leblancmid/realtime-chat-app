@@ -40,7 +40,7 @@ export default function ChatMessageItem({
 
                         {msg.image && (
                             <img
-                                src={msg.image}
+                                src={`http://localhost${msg.image}`}
                                 className="max-w-[220px] rounded-lg cursor-pointer border border-gray-700"
                                 onClick={() => window.open(msg.image, "_blank")}
                             />
