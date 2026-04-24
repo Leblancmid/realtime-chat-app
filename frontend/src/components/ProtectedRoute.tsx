@@ -2,11 +2,15 @@ import { Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 
 export default function ProtectedRoute() {
-    const { user } = useAuth();
+    const { user, loading } = useAuth();
 
-    if (!user) {
-        return <Navigate to="/login" />;
+    if (loading) {
+        return <div>Loading...</div>; // prevent redirect loop
     }
 
-    return <Outlet />; // 🔥 this enables nested routes
+    if (!user) {
+        return <Navigate to="/login" replace />;
+    }
+
+    return <Outlet />; // ✅ REQUIRED for grouped routes
 }
