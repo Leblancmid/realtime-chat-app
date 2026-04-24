@@ -3,6 +3,7 @@ import { api } from "@/api/axios";
 import echo from "@/echo";
 import { useAuth } from "@/context/AuthContext";
 import type { User, Message } from "@/types";
+import { useNavigate } from "react-router-dom";
 
 export default function Chat() {
     const [users, setUsers] = useState<User[]>([]);
@@ -14,6 +15,8 @@ export default function Chat() {
     const { user } = useAuth();
     const chatRef = useRef<HTMLDivElement | null>(null);
     const typingTimeout = useRef<any>(null);
+
+    const navigate = useNavigate();
 
     // 🔹 Load users
     useEffect(() => {
@@ -171,7 +174,7 @@ export default function Chat() {
     return (
         <div className="flex h-screen bg-[#0f172a] text-white">
             {/* Sidebar */}
-            <div className="w-72 bg-[#020817] border-r border-gray-800">
+            <div className="w-72 bg-[#020817] border-r border-gray-800 rounded-l-xl">
                 <div className="p-4 font-semibold border-b border-gray-800">
                     Messages
                 </div>
@@ -220,27 +223,35 @@ export default function Chat() {
                 {selectedUser ? (
                     <>
                         {/* Header */}
-                        <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-800 bg-[#020817]">
-                            <div className="w-8 h-8 rounded-full bg-gray-700 overflow-hidden flex items-center justify-center text-xs mr-2 shrink-0">
-                                {selectedUser.avatar ? (
-                                    <img
-                                        src={selectedUser.avatar}
-                                        className="w-full h-full object-cover"
-                                    />
-                                ) : (
-                                    <span>{selectedUser.name[0]}</span>
-                                )}
-                            </div>
+                        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-800 bg-[#020817]">
+                            <div className="flex items-center gap-4">
+                                {/* 🔙 Back Button */}
+                                <button
+                                    onClick={() => navigate("/dashboard")}
+                                    className="text-gray-400 hover:text-white transition"
+                                >
+                                    ←
+                                </button>
 
-                            <div>
-                                <p className="font-medium">
-                                    {selectedUser.name}
-                                </p>
-                                <p className="text-xs text-gray-400">
-                                    {selectedUser.is_online
-                                        ? "Online"
-                                        : "Offline"}
-                                </p>
+                                {/* Avatar */}
+                                <div className="w-10 h-10 rounded-full bg-gray-700 overflow-hidden flex items-center justify-center">
+                                    {selectedUser.avatar ? (
+                                        <img
+                                            src={selectedUser.avatar}
+                                            className="w-full h-full object-cover"
+                                        />
+                                    ) : (
+                                        <span>{selectedUser.name[0]}</span>
+                                    )}
+                                </div>
+
+                                {/* Name */}
+                                <div>
+                                    <p className="font-medium">{selectedUser.name}</p>
+                                    <p className="text-xs text-gray-400">
+                                        {selectedUser.is_online ? "Online" : "Offline"}
+                                    </p>
+                                </div>
                             </div>
                         </div>
 
