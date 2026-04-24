@@ -1,90 +1,100 @@
-import { useEffect, useState, useRef } from "react";
-import { api } from "@/api/axios";
-import echo from "@/echo";
-import { useAuth } from "@/context/AuthContext";
-import type { User, Message } from "@/types";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import EmojiPicker from "emoji-picker-react";
-
 import {
     Image,
     Mic,
     Smile,
     Send,
-    Sparkles
+    Sparkles,
 } from "lucide-react";
+
+import { api } from "@/api/axios";
+import echo from "@/echo";
+import { useAuth } from "@/context/AuthContext";
+import type { User, Message } from "@/types";
+
+const stickers = [
+    "/stickers/happy.png",
+    "/stickers/laugh.png",
+    "/stickers/angry.png",
+];
 
 export default function Chat() {
     const [users, setUsers] = useState<User[]>([]);
     const [selectedUser, setSelectedUser] = useState<User | null>(null);
     const [messages, setMessages] = useState<Message[]>([]);
-    const [image, setImage] = useState<File | null>(null);
     const [text, setText] = useState("");
+    const [image, setImage] = useState<File | null>(null);
+
     const [typingUser, setTypingUser] = useState<number | null>(null);
-
-    const { user } = useAuth();
-    const chatRef = useRef<HTMLDivElement | null>(null);
-    const typingTimeout = useRef<any>(null);
-
-    const navigate = useNavigate();
 
     const [showGifPicker, setShowGifPicker] = useState(false);
     const [showStickerPicker, setShowStickerPicker] = useState(false);
-
     const [showEmoji, setShowEmoji] = useState(false);
 
-    // 🔹 Load users
+    const [gifSearch, setGifSearch] = useState("");
+    const [gifs, setGifs] = useState<string[]>([]);
+
+    const { user } = useAuth();
+    const navigate = useNavigate();
+
+    const chatRef = useRef<HTMLDivElement | null>(null);
+    const typingTimeout = useRef<number | null>(null);
+
+    const sortMessages = (items: Message[]) => {
+        return [...items].sort(
+            (a, b) =>
+                new Date(a.created_at).getTime() -
+                new Date(b.created_at).getTime()
+        );
+    };
+
     useEffect(() => {
         const fetchUsers = () => {
             api.get("/api/users").then((res) => setUsers(res.data));
         };
 
         fetchUsers();
-        const interval = setInterval(fetchUsers, 5000);
 
-        return () => clearInterval(interval);
+        const interval = window.setInterval(fetchUsers, 5000);
+
+        return () => window.clearInterval(interval);
     }, []);
 
-    // 🔹 Load messages
+    useEffect(() => {
+        if (!selectedUser) return;
+
+        const updated = users.find((u) => u.id === selectedUser.id);
+
+        if (updated) {
+            setSelectedUser(updated);
+        }
+    }, [users]);
+
     useEffect(() => {
         if (!selectedUser) return;
 
         api.get(`/api/messages/${selectedUser.id}`).then((res) => {
-            setMessages(
-                res.data.sort(
-                    (a: Message, b: Message) =>
-                        new Date(a.created_at).getTime() -
-                        new Date(b.created_at).getTime()
-                )
-            );
+            setMessages(sortMessages(res.data));
         });
 
-        // mark as seen
         api.post("/api/messages/seen", {
             user_id: selectedUser.id,
         });
     }, [selectedUser]);
 
-    // 🔥 Realtime listeners
     useEffect(() => {
         if (!user) return;
 
         const channel = echo.channel(`chat.${user.id}`);
 
-        // MESSAGE
         channel.listen(".MessageSent", (e: any) => {
             if (selectedUser && e.message.sender_id === selectedUser.id) {
-                setMessages((prev) =>
-                    [...prev, e.message].sort(
-                        (a, b) =>
-                            new Date(a.created_at).getTime() -
-                            new Date(b.created_at).getTime()
-                    )
-                );
+                setMessages((prev) => sortMessages([...prev, e.message]));
             }
         });
 
-        // SEEN
         channel.listen(".MessageSeen", () => {
             setMessages((prev) => {
                 const lastIndex = [...prev]
@@ -103,12 +113,13 @@ export default function Chat() {
             });
         });
 
-        // TYPING
         channel.listen(".UserTyping", (e: any) => {
             if (selectedUser && e.senderId === selectedUser.id) {
                 setTypingUser(e.senderId);
 
-                setTimeout(() => setTypingUser(null), 5000);
+                window.setTimeout(() => {
+                    setTypingUser(null);
+                }, 3000);
             }
         });
 
@@ -117,16 +128,14 @@ export default function Chat() {
         };
     }, [user, selectedUser]);
 
-    // 🔹 ONLINE HEARTBEAT
     useEffect(() => {
-        const interval = setInterval(() => {
+        const interval = window.setInterval(() => {
             api.post("/api/online");
         }, 5000);
 
-        return () => clearInterval(interval);
+        return () => window.clearInterval(interval);
     }, []);
 
-    // 🔹 Auto-scroll
     useEffect(() => {
         const el = chatRef.current;
         if (!el) return;
@@ -134,12 +143,34 @@ export default function Chat() {
         el.scrollTop = el.scrollHeight;
     }, [messages]);
 
-    // 🔹 Typing handler
+    useEffect(() => {
+        if (!showGifPicker) return;
+
+        const fetchGifs = async () => {
+            const key = "LIVDSRZULELA";
+
+            const url = gifSearch
+                ? `https://tenor.googleapis.com/v2/search?q=${encodeURIComponent(
+                    gifSearch
+                )}&key=${key}&limit=12`
+                : `https://tenor.googleapis.com/v2/featured?key=${key}&limit=12`;
+
+            const res = await fetch(url);
+            const data = await res.json();
+
+            setGifs(
+                data.results.map((gif: any) => gif.media_formats.gif.url)
+            );
+        };
+
+        fetchGifs();
+    }, [gifSearch, showGifPicker]);
+
     const handleTyping = async () => {
         if (!selectedUser) return;
 
         if (typingTimeout.current) {
-            clearTimeout(typingTimeout.current);
+            window.clearTimeout(typingTimeout.current);
         }
 
         try {
@@ -152,12 +183,12 @@ export default function Chat() {
             console.error(err);
         }
 
-        typingTimeout.current = setTimeout(() => { }, 1000);
+        typingTimeout.current = window.setTimeout(() => { }, 1000);
     };
 
-    // 🔹 Send message
     const sendMessage = async () => {
         if (!selectedUser) return;
+        if (!text.trim() && !image) return;
 
         const formData = new FormData();
         formData.append("receiver_id", String(selectedUser.id));
@@ -170,32 +201,28 @@ export default function Chat() {
             formData.append("image", image);
         }
 
-        if (!text.trim() && !image) return;
-
         const res = await api.post("/api/messages", formData);
 
-        setMessages((prev) =>
-            [...prev, res.data].sort(
-                (a, b) =>
-                    new Date(a.created_at).getTime() -
-                    new Date(b.created_at).getTime()
-            )
-        );
+        setMessages((prev) => sortMessages([...prev, res.data]));
 
         setText("");
-        setImage(null); // 🔥 CLEAR PREVIEW
+        setImage(null);
     };
 
-    // Sync online
-    useEffect(() => {
+    const sendGif = async (gifUrl: string) => {
         if (!selectedUser) return;
 
-        const updated = users.find(u => u.id === selectedUser.id);
+        const res = await api.post("/api/messages", {
+            receiver_id: selectedUser.id,
+            image: gifUrl,
+        });
 
-        if (updated) {
-            setSelectedUser(updated);
-        }
-    }, [users]);
+        setMessages((prev) => sortMessages([...prev, res.data]));
+
+        setShowGifPicker(false);
+        setShowStickerPicker(false);
+        setGifSearch("");
+    };
 
     return (
         <div className="flex h-screen bg-[#0f172a] text-white">
@@ -245,13 +272,12 @@ export default function Chat() {
             </div>
 
             {/* Chat */}
-            <div className="flex-1 flex flex-col">
+            <div className="flex-1 flex flex-col relative">
                 {selectedUser ? (
                     <>
                         {/* Header */}
                         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-800 bg-[#020817]">
                             <div className="flex items-center gap-4">
-                                {/* 🔙 Back Button */}
                                 <button
                                     onClick={() => navigate("/dashboard")}
                                     className="text-gray-400 hover:text-white transition"
@@ -259,7 +285,6 @@ export default function Chat() {
                                     ←
                                 </button>
 
-                                {/* Avatar */}
                                 <div className="w-10 h-10 rounded-full bg-gray-700 overflow-hidden flex items-center justify-center">
                                     {selectedUser.avatar ? (
                                         <img
@@ -271,11 +296,14 @@ export default function Chat() {
                                     )}
                                 </div>
 
-                                {/* Name */}
                                 <div>
-                                    <p className="font-medium">{selectedUser.name}</p>
+                                    <p className="font-medium">
+                                        {selectedUser.name}
+                                    </p>
                                     <p className="text-xs text-gray-400">
-                                        {selectedUser.is_online ? "Online" : "Offline"}
+                                        {selectedUser.is_online
+                                            ? "Online"
+                                            : "Offline"}
                                     </p>
                                 </div>
                             </div>
@@ -296,20 +324,24 @@ export default function Chat() {
                                 return (
                                     <div
                                         key={msg.id}
-                                        className={`flex ${isMe
+                                        className={`flex gap-3 ${isMe
                                             ? "justify-end"
                                             : "justify-start"
                                             }`}
                                     >
                                         {!isMe && (
-                                            <div className="w-10 h-10 rounded-full bg-gray-700 overflow-hidden flex items-center justify-center">
+                                            <div className="w-10 h-10 rounded-full bg-gray-700 overflow-hidden flex items-center justify-center shrink-0">
                                                 {selectedUser.avatar ? (
                                                     <img
-                                                        src={selectedUser.avatar}
+                                                        src={
+                                                            selectedUser.avatar
+                                                        }
                                                         className="w-full h-full object-cover"
                                                     />
                                                 ) : (
-                                                    <span>{selectedUser.name[0]}</span>
+                                                    <span>
+                                                        {selectedUser.name[0]}
+                                                    </span>
                                                 )}
                                             </div>
                                         )}
@@ -322,13 +354,20 @@ export default function Chat() {
                                                     }`}
                                             >
                                                 <div className="space-y-2">
-                                                    {msg.message && <p>{msg.message}</p>}
+                                                    {msg.message && (
+                                                        <p>{msg.message}</p>
+                                                    )}
 
                                                     {msg.image && (
                                                         <img
                                                             src={msg.image}
                                                             className="max-w-[220px] rounded-lg cursor-pointer hover:opacity-90 border border-gray-700"
-                                                            onClick={() => window.open(msg.image, "_blank")}
+                                                            onClick={() =>
+                                                                window.open(
+                                                                    msg.image,
+                                                                    "_blank"
+                                                                )
+                                                            }
                                                         />
                                                     )}
                                                 </div>
@@ -356,86 +395,69 @@ export default function Chat() {
                             )}
                         </div>
 
+                        {/* GIF Picker */}
+                        {showGifPicker && (
+                            <div className="absolute bottom-24 left-6 w-80 bg-gray-900 border border-gray-700 rounded-lg p-3 z-50 shadow-xl">
+                                <input
+                                    value={gifSearch}
+                                    onChange={(e) =>
+                                        setGifSearch(e.target.value)
+                                    }
+                                    placeholder="Search GIFs..."
+                                    className="w-full mb-2 bg-gray-800 p-2 rounded text-sm outline-none"
+                                />
+
+                                <div className="grid grid-cols-3 gap-2 max-h-60 overflow-y-auto">
+                                    {gifs.map((gif, i) => (
+                                        <img
+                                            key={i}
+                                            src={gif}
+                                            className="cursor-pointer rounded hover:opacity-80"
+                                            onClick={() => sendGif(gif)}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Sticker Picker */}
+                        {showStickerPicker && (
+                            <div className="absolute bottom-24 left-6 w-72 bg-gray-900 border border-gray-700 rounded-lg p-3 z-50 shadow-xl">
+                                <p className="text-xs text-gray-400 mb-2">
+                                    Stickers
+                                </p>
+
+                                <div className="grid grid-cols-4 gap-3">
+                                    {stickers.map((sticker, i) => (
+                                        <img
+                                            key={i}
+                                            src={sticker}
+                                            className="cursor-pointer hover:scale-110 transition"
+                                            onClick={() => sendGif(sticker)}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Emoji Picker */}
+                        {showEmoji && (
+                            <div className="absolute bottom-24 right-6 z-50">
+                                <EmojiPicker
+                                    onEmojiClick={(emojiData) => {
+                                        setText(
+                                            (prev) => prev + emojiData.emoji
+                                        );
+                                    }}
+                                    theme="dark"
+                                />
+                            </div>
+                        )}
+
                         {/* Input */}
                         <div className="px-4 py-3 border-t border-gray-800 bg-[#020817]">
-                            <div className="flex items-center gap-3">
-
-                                {/* LEFT ICONS */}
-                                <div className="flex items-center gap-3 text-blue-500">
-
-                                    {/* MIC */}
-                                    <button className="hover:scale-110 transition">
-                                        <Mic size={20} />
-                                    </button>
-
-                                    {/* IMAGE */}
-                                    <button className="hover:scale-110 transition">
-                                        <Image size={20} />
-                                    </button>
-
-
-                                    {/* STICKERS */}
-                                    <button
-                                        onClick={() => setShowStickerPicker(true)}
-                                        className="hover:scale-110 transition"
-                                    >
-                                        <Sparkles size={20} />
-                                    </button>
-
-                                    {/* GIF */}
-                                    <button
-                                        onClick={() => setShowGifPicker(true)}
-                                        className="hover:scale-110 transition text-xs font-bold"
-                                    >
-                                        GIF
-                                    </button>
-
-                                </div>
-
-                                {/* INPUT */}
-                                <div className="flex-1 bg-gray-800 rounded-full px-4 py-2 flex items-center">
-                                    <input
-                                        value={text}
-                                        onChange={(e) => {
-                                            setText(e.target.value);
-                                            handleTyping();
-                                        }}
-                                        className="flex-1 bg-transparent outline-none text-sm text-white placeholder-gray-400"
-                                        placeholder="Aa"
-                                    />
-
-                                    <button onClick={() => setShowEmoji(!showEmoji)}>
-                                        <Smile size={20} />
-                                    </button>
-
-                                    {showEmoji && (
-                                        <div className="absolute bottom-20 right-4 z-50">
-                                            <EmojiPicker
-                                                onEmojiClick={(emojiData) => {
-                                                    setText((prev) => prev + emojiData.emoji);
-                                                }}
-                                                theme="dark"
-                                            />
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* RIGHT BUTTON */}
-                                <button
-                                    onClick={sendMessage}
-                                    disabled={!text.trim() && !image}
-                                    className={`transition p-2 rounded-full ${text.trim() || image
-                                        ? "bg-blue-600 hover:bg-blue-700 text-white"
-                                        : "bg-gray-700 text-gray-400 cursor-not-allowed"
-                                        }`}
-                                >
-                                    <Send size={18} />
-                                </button>
-                            </div>
-
-                            {/* IMAGE PREVIEW */}
                             {image && (
-                                <div className="mt-3 flex items-center gap-2">
+                                <div className="mb-3 flex items-center gap-2">
                                     <img
                                         src={URL.createObjectURL(image)}
                                         className="w-20 h-20 object-cover rounded-lg border border-gray-700"
@@ -448,6 +470,90 @@ export default function Chat() {
                                     </button>
                                 </div>
                             )}
+
+                            <div className="flex items-center gap-3">
+                                <div className="flex items-center gap-2 text-blue-500">
+                                    <button className="p-2 rounded-full hover:bg-gray-700 transition">
+                                        <Mic size={20} />
+                                    </button>
+
+                                    <label className="p-2 rounded-full hover:bg-gray-700 transition cursor-pointer">
+                                        <Image size={20} />
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            hidden
+                                            onChange={(e) =>
+                                                setImage(
+                                                    e.target.files?.[0] || null
+                                                )
+                                            }
+                                        />
+                                    </label>
+
+                                    <button
+                                        onClick={() => {
+                                            setShowStickerPicker((prev) => !prev);
+                                            setShowGifPicker(false);
+                                            setShowEmoji(false);
+                                        }}
+                                        className="p-2 rounded-full hover:bg-gray-700 transition"
+                                    >
+                                        <Sparkles size={20} />
+                                    </button>
+
+                                    <button
+                                        onClick={() => {
+                                            setShowGifPicker((prev) => !prev);
+                                            setShowStickerPicker(false);
+                                            setShowEmoji(false);
+                                        }}
+                                        className="h-8 px-2 text-[11px] font-bold rounded-full hover:bg-gray-700 transition"
+                                    >
+                                        GIF
+                                    </button>
+                                </div>
+
+                                <div className="flex-1 bg-gray-800 rounded-full px-4 py-2 flex items-center">
+                                    <input
+                                        value={text}
+                                        onChange={(e) => {
+                                            setText(e.target.value);
+                                            handleTyping();
+                                        }}
+                                        onKeyDown={(e) => {
+                                            if (e.key === "Enter") {
+                                                e.preventDefault();
+                                                sendMessage();
+                                            }
+                                        }}
+                                        className="flex-1 bg-transparent outline-none text-sm text-white placeholder-gray-400"
+                                        placeholder="Aa"
+                                    />
+
+                                    <button
+                                        onClick={() => {
+                                            setShowEmoji((prev) => !prev);
+                                            setShowGifPicker(false);
+                                            setShowStickerPicker(false);
+                                        }}
+                                        className="text-gray-400 hover:text-white"
+                                    >
+                                        <Smile size={20} />
+                                    </button>
+                                </div>
+
+                                <button
+                                    onClick={sendMessage}
+                                    disabled={!text.trim() && !image}
+                                    className={`transition p-2 rounded-full ${text.trim() || image
+                                        ? "bg-blue-600 hover:bg-blue-700 text-white"
+                                        : "bg-gray-700 text-gray-400 cursor-not-allowed"
+                                        }`}
+                                >
+                                    <Send size={18} />
+                                </button>
+                            </div>
                         </div>
                     </>
                 ) : (
