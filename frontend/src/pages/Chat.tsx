@@ -5,10 +5,19 @@ import { useAuth } from "@/context/AuthContext";
 import type { User, Message } from "@/types";
 import { useNavigate } from "react-router-dom";
 
+import {
+    Image,
+    Mic,
+    Smile,
+    Send,
+    Sparkles
+} from "lucide-react";
+
 export default function Chat() {
     const [users, setUsers] = useState<User[]>([]);
     const [selectedUser, setSelectedUser] = useState<User | null>(null);
     const [messages, setMessages] = useState<Message[]>([]);
+    const [image, setImage] = useState<File | null>(null);
     const [text, setText] = useState("");
     const [typingUser, setTypingUser] = useState<number | null>(null);
 
@@ -17,6 +26,9 @@ export default function Chat() {
     const typingTimeout = useRef<any>(null);
 
     const navigate = useNavigate();
+
+    const [showGifPicker, setShowGifPicker] = useState(false);
+    const [showStickerPicker, setShowStickerPicker] = useState(false);
 
     // 🔹 Load users
     useEffect(() => {
@@ -142,12 +154,22 @@ export default function Chat() {
 
     // 🔹 Send message
     const sendMessage = async () => {
-        if (!selectedUser || !text.trim()) return;
+        if (!selectedUser) return;
 
-        const res = await api.post("/api/messages", {
-            receiver_id: selectedUser.id,
-            message: text,
-        });
+        const formData = new FormData();
+        formData.append("receiver_id", String(selectedUser.id));
+
+        if (text.trim()) {
+            formData.append("message", text);
+        }
+
+        if (image) {
+            formData.append("image", image);
+        }
+
+        if (!text.trim() && !image) return;
+
+        const res = await api.post("/api/messages", formData);
 
         setMessages((prev) =>
             [...prev, res.data].sort(
@@ -158,6 +180,7 @@ export default function Chat() {
         );
 
         setText("");
+        setImage(null); // 🔥 CLEAR PREVIEW
     };
 
     // Sync online
@@ -295,7 +318,17 @@ export default function Chat() {
                                                     : "bg-gray-800 text-gray-200"
                                                     }`}
                                             >
-                                                {msg.message}
+                                                <div className="space-y-2">
+                                                    {msg.message && <p>{msg.message}</p>}
+
+                                                    {msg.image && (
+                                                        <img
+                                                            src={msg.image}
+                                                            className="max-w-[220px] rounded-lg cursor-pointer hover:opacity-90 border border-gray-700"
+                                                            onClick={() => window.open(msg.image, "_blank")}
+                                                        />
+                                                    )}
+                                                </div>
                                             </div>
 
                                             {isMe &&
@@ -321,25 +354,86 @@ export default function Chat() {
                         </div>
 
                         {/* Input */}
-                        <div className="px-6 py-4 border-t border-gray-800 bg-[#020817]">
-                            <div className="flex gap-2 bg-gray-800 px-4 py-2 rounded-full">
-                                <input
-                                    value={text}
-                                    onChange={(e) => {
-                                        setText(e.target.value);
-                                        handleTyping(); // 🔥 FIXED
-                                    }}
-                                    className="flex-1 bg-transparent outline-none text-sm"
-                                    placeholder="Message..."
-                                />
+                        <div className="px-4 py-3 border-t border-gray-800 bg-[#020817]">
+                            <div className="flex items-center gap-3">
 
+                                {/* LEFT ICONS */}
+                                <div className="flex items-center gap-3 text-blue-500">
+
+                                    {/* MIC */}
+                                    <button className="hover:scale-110 transition">
+                                        <Mic size={20} />
+                                    </button>
+
+                                    {/* IMAGE */}
+                                    <button className="hover:scale-110 transition">
+                                        <Image size={20} />
+                                    </button>
+
+
+                                    {/* STICKERS */}
+                                    <button
+                                        onClick={() => setShowStickerPicker(true)}
+                                        className="hover:scale-110 transition"
+                                    >
+                                        <Sparkles size={20} />
+                                    </button>
+
+                                    {/* GIF */}
+                                    <button
+                                        onClick={() => setShowGifPicker(true)}
+                                        className="hover:scale-110 transition text-xs font-bold"
+                                    >
+                                        GIF
+                                    </button>
+
+                                </div>
+
+                                {/* INPUT */}
+                                <div className="flex-1 bg-gray-800 rounded-full px-4 py-2 flex items-center">
+                                    <input
+                                        value={text}
+                                        onChange={(e) => {
+                                            setText(e.target.value);
+                                            handleTyping();
+                                        }}
+                                        className="flex-1 bg-transparent outline-none text-sm text-white placeholder-gray-400"
+                                        placeholder="Aa"
+                                    />
+
+                                    <button className="text-gray-400 hover:text-white">
+                                        <Smile size={20} />
+                                    </button>
+                                </div>
+
+                                {/* RIGHT BUTTON */}
                                 <button
                                     onClick={sendMessage}
-                                    className="bg-blue-600 px-4 py-1 rounded-full text-sm"
+                                    disabled={!text.trim() && !image}
+                                    className={`transition p-2 rounded-full ${text.trim() || image
+                                        ? "bg-blue-600 hover:bg-blue-700 text-white"
+                                        : "bg-gray-700 text-gray-400 cursor-not-allowed"
+                                        }`}
                                 >
-                                    Send
+                                    <Send size={18} />
                                 </button>
                             </div>
+
+                            {/* IMAGE PREVIEW */}
+                            {image && (
+                                <div className="mt-3 flex items-center gap-2">
+                                    <img
+                                        src={URL.createObjectURL(image)}
+                                        className="w-20 h-20 object-cover rounded-lg border border-gray-700"
+                                    />
+                                    <button
+                                        onClick={() => setImage(null)}
+                                        className="text-red-400 text-sm"
+                                    >
+                                        Remove
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     </>
                 ) : (

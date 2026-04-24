@@ -6,4 +6,5 @@ export type Message = {
     created_at: string;
     delivered_at?: string;
     read_at?: string;
+    image: string;
 };
