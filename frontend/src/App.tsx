@@ -9,6 +9,8 @@ import GuestRoute from "@/components/GuestRoute";
 
 import Chat from "@/pages/Chat";
 
+import Profile from "@/pages/Profile";
+
 function App() {
   return (
     <BrowserRouter>
@@ -45,6 +47,15 @@ function App() {
           element={
             <ProtectedRoute>
               <Chat />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <Profile />
             </ProtectedRoute>
           }
         />

@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
+use App\Http\Controllers\ProfileController;
 
 Route::middleware('auth:sanctum')->group(function () {
 
@@ -44,4 +45,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
         return response()->json(['status' => 'ok']);
     });
+
+    Route::post('/profile', [ProfileController::class, 'update']);
 });

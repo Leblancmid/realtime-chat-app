@@ -1,10 +1,13 @@
 import { useEffect, useState } from "react";
 import { LayoutDashboard, MessageCircle, Moon, Sun } from "lucide-react";
 import { useLocation } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
 
 export default function Layout({ children }: any) {
     const [dark, setDark] = useState(false);
     const location = useLocation();
+    const [open, setOpen] = useState(false);
+    const { user } = useAuth();
 
     useEffect(() => {
         const saved = localStorage.getItem("dark");
@@ -55,16 +58,59 @@ export default function Layout({ children }: any) {
                     </a>
                 </nav>
 
-                {/* Bottom section */}
-                <div className="p-4 border-t border-gray-800 flex items-center justify-between">
-                    <span className="text-sm text-gray-400">User</span>
 
-                    <button
-                        onClick={toggleDark}
-                        className="p-2 rounded-lg bg-gray-800 hover:bg-gray-700 transition"
-                    >
-                        {dark ? <Sun size={16} /> : <Moon size={16} />}
-                    </button>
+
+                {/* Bottom section */}
+                <div className="p-4 border-t border-gray-800">
+                    <div className="relative">
+                        <button
+                            onClick={() => setOpen(!open)}
+                            className="flex items-center gap-3 w-full hover:bg-gray-800 p-2 rounded-lg transition"
+                        >
+                            {/* Avatar */}
+                            <div className="w-9 h-9 rounded-full bg-gray-700 flex items-center justify-center overflow-hidden">
+                                {user?.avatar ? (
+                                    <img src={user.avatar} className="w-full h-full object-cover" />
+                                ) : (
+                                    <span className="text-sm">{user?.name?.[0]}</span>
+                                )}
+                            </div>
+
+                            {/* Name */}
+                            <div className="flex-1 text-left">
+                                <p className="text-sm font-medium">{user?.name}</p>
+                                <p className="text-xs text-gray-400">Online</p>
+                            </div>
+                        </button>
+
+                        {/* Dropdown */}
+                        {open && (
+                            <div className="absolute bottom-14 left-0 w-full bg-gray-800 border border-gray-700 rounded-lg shadow-lg overflow-hidden">
+                                <a
+                                    href="/profile"
+                                    className="block px-4 py-2 text-sm hover:bg-gray-700"
+                                >
+                                    Profile
+                                </a>
+
+                                <button
+                                    className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-700"
+                                >
+                                    Logout
+                                </button>
+
+                                <div className="border-t border-gray-700" />
+
+                                <button
+                                    onClick={toggleDark}
+                                    className="flex items-center gap-2 w-full px-4 py-2 text-sm hover:bg-gray-700"
+                                >
+                                    {dark ? <Sun size={14} /> : <Moon size={14} />}
+                                    Toggle Theme
+                                </button>
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
 
