@@ -29,6 +29,7 @@ export default function Chat() {
 
     const { user } = useAuth();
     const chatRef = useRef<HTMLDivElement | null>(null);
+    const typingTimeout = useRef<any>(null);
 
     // 🔹 Load users
     useEffect(() => {
@@ -105,7 +106,7 @@ export default function Chat() {
             if (selectedUser && e.senderId === selectedUser.id) {
                 setTypingUser(e.senderId);
 
-                setTimeout(() => setTypingUser(null), 1500);
+                setTimeout(() => setTypingUser(null), 5000);
             }
         });
 
@@ -114,6 +115,15 @@ export default function Chat() {
         };
     }, [user, selectedUser]);
 
+    // 🔹 ONLINE HEARTBEAT
+    useEffect(() => {
+        const interval = setInterval(() => {
+            api.post("/api/online");
+        }, 5000);
+
+        return () => clearInterval(interval);
+    }, []);
+
     // 🔹 Auto-scroll
     useEffect(() => {
         const el = chatRef.current;
@@ -121,6 +131,27 @@ export default function Chat() {
 
         el.scrollTop = el.scrollHeight;
     }, [messages]);
+
+    // 🔹 Typing handler
+    const handleTyping = async () => {
+        if (!selectedUser) return;
+
+        if (typingTimeout.current) {
+            clearTimeout(typingTimeout.current);
+        }
+
+        try {
+            await api.get("/sanctum/csrf-cookie");
+
+            await api.post("/api/typing", {
+                receiver_id: selectedUser.id,
+            });
+        } catch (err) {
+            console.error(err);
+        }
+
+        typingTimeout.current = setTimeout(() => { }, 1000);
+    };
 
     // 🔹 Send message
     const sendMessage = async () => {
@@ -141,6 +172,17 @@ export default function Chat() {
 
         setText("");
     };
+
+    // Sync online
+    useEffect(() => {
+        if (!selectedUser) return;
+
+        const updated = users.find(u => u.id === selectedUser.id);
+
+        if (updated) {
+            setSelectedUser(updated);
+        }
+    }, [users]);
 
     return (
         <div className="flex h-screen bg-[#0f172a] text-white">
@@ -267,7 +309,10 @@ export default function Chat() {
                             <div className="flex gap-2 bg-gray-800 px-4 py-2 rounded-full">
                                 <input
                                     value={text}
-                                    onChange={(e) => setText(e.target.value)}
+                                    onChange={(e) => {
+                                        setText(e.target.value);
+                                        handleTyping(); // 🔥 FIXED
+                                    }}
                                     className="flex-1 bg-transparent outline-none text-sm"
                                     placeholder="Message..."
                                 />
