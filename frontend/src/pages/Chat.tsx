@@ -186,8 +186,15 @@ export default function Chat() {
                                 : "hover:bg-gray-800/60"
                                 }`}
                         >
-                            <div className="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center text-sm">
-                                {u.name[0]}
+                            <div className="w-10 h-10 rounded-full bg-gray-700 overflow-hidden flex items-center justify-center text-sm">
+                                {u.avatar ? (
+                                    <img
+                                        src={u.avatar}
+                                        className="w-full h-full object-cover"
+                                    />
+                                ) : (
+                                    <span>{u.name[0]}</span>
+                                )}
                             </div>
 
                             <div className="flex-1">
@@ -214,8 +221,15 @@ export default function Chat() {
                     <>
                         {/* Header */}
                         <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-800 bg-[#020817]">
-                            <div className="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center">
-                                {selectedUser.name[0]}
+                            <div className="w-8 h-8 rounded-full bg-gray-700 overflow-hidden flex items-center justify-center text-xs mr-2 shrink-0">
+                                {selectedUser.avatar ? (
+                                    <img
+                                        src={selectedUser.avatar}
+                                        className="w-full h-full object-cover"
+                                    />
+                                ) : (
+                                    <span>{selectedUser.name[0]}</span>
+                                )}
                             </div>
 
                             <div>
@@ -251,8 +265,15 @@ export default function Chat() {
                                             }`}
                                     >
                                         {!isMe && (
-                                            <div className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center text-xs mr-2">
-                                                {selectedUser.name[0]}
+                                            <div className="w-10 h-10 rounded-full bg-gray-700 overflow-hidden flex items-center justify-center">
+                                                {selectedUser.avatar ? (
+                                                    <img
+                                                        src={selectedUser.avatar}
+                                                        className="w-full h-full object-cover"
+                                                    />
+                                                ) : (
+                                                    <span>{selectedUser.name[0]}</span>
+                                                )}
                                             </div>
                                         )}
 

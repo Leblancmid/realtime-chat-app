@@ -108,7 +108,7 @@ export default function ProfileModal({ onClose }: any) {
                     {tab === "profile" && (
                         <div className="space-y-6 px-2">
                             {/* Banner */}
-                            <div className="relative h-36 rounded-xl overflow-hidden bg-gradient-to-r from-blue-600 to-purple-600 group cursor-pointer">
+                            <div className="relative h-36 rounded-xl overflow-hidden bg-linear-to-r from-blue-600 to-purple-600 group cursor-pointer">
                                 {previewBanner && (
                                     <img
                                         src={previewBanner}
