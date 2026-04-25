@@ -5,7 +5,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useNavigate } from "react-router-dom";
 
 import { Eye, EyeOff } from "lucide-react";
-import Toast from "@/components/ui/Toast";
+import { useToast } from "@/context/ToastContext";
 
 import type { LoginForm } from "@/types";
 
@@ -24,10 +24,7 @@ export default function Login() {
     const [showPassword, setShowPassword] = useState(false);
     const [remember, setRemember] = useState(false);
 
-    const [toast, setToast] = useState<{
-        message: string;
-        type: "success" | "error";
-    } | null>(null);
+    const { showToast } = useToast();
 
     const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
         setForm({
@@ -50,9 +47,11 @@ export default function Login() {
                 remember,
             });
 
-            await fetchUser();
+            const res = await api.get("/api/user");
 
-            setToast({ message: "Welcome back 👋", type: "success" });
+            showToast(`Welcome back, ${res.data.name} `, "success");
+
+            await fetchUser();
 
             setTimeout(() => navigate("/dashboard"), 800);
         } catch {
@@ -164,15 +163,6 @@ export default function Login() {
                     </a>
                 </p>
             </form>
-
-            {/* TOAST */}
-            {toast && (
-                <Toast
-                    message={toast.message}
-                    type={toast.type}
-                    onClose={() => setToast(null)}
-                />
-            )}
         </div>
     );
 }
