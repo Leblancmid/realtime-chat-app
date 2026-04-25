@@ -1,16 +1,17 @@
 import { useEffect, useState } from "react";
 import { LayoutDashboard, MessageCircle, Moon, Sun } from "lucide-react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 
 import ProfileModal from "./ProfileModal";
 
 export default function Layout({ children }: any) {
+    const navigate = useNavigate();
     const [dark, setDark] = useState(false);
     const location = useLocation();
     const [open, setOpen] = useState(false);
     const [openProfile, setOpenProfile] = useState(false);
-    const { user } = useAuth();
+    const { user, logout } = useAuth();
 
     useEffect(() => {
         const saved = localStorage.getItem("dark");
@@ -100,6 +101,10 @@ export default function Layout({ children }: any) {
                                 </button>
 
                                 <button
+                                    onClick={async () => {
+                                        await logout();
+                                        navigate("/login");
+                                    }}
                                     className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-700"
                                 >
                                     Logout
