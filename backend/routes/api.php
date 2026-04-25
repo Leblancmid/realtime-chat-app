@@ -5,8 +5,9 @@ use App\Models\Message;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Cache;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\UserController;
+
 
 Route::middleware('auth:sanctum')->group(function () {
 
@@ -24,17 +25,10 @@ Route::middleware('auth:sanctum')->group(function () {
         ));
     });
 
-    Route::post('/online', function () {
-        Cache::put('user-online-' . Auth::id(), true, now()->addSeconds(10));
-    });
+    Route::post('/online', [UserController::class, 'online']);
 
     Route::get('/users', function () {
-        return \App\Models\User::where('id', '!=', Auth::id())
-            ->get()
-            ->map(function ($user) {
-                $user->is_online = Cache::has('user-online-' . $user->id);
-                return $user;
-            });
+        return \App\Models\User::where('id', '!=', Auth::id())->get();
     });
 
     Route::post('/messages/seen', function (Request $request) {
