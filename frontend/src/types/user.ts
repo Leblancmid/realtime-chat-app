@@ -5,4 +5,5 @@ export type User = {
     avatar?: string;
     is_online?: boolean;
     banner?: string;
+    last_seen?: string;
 };

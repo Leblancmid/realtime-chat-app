@@ -14,6 +14,16 @@ import { useChat } from "@/hooks/useChat";
 export default function Chat() {
     const { user } = useAuth();
 
+    const [, forceUpdate] = useState(0);
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            forceUpdate((n) => n + 1);
+        }, 60000); // every 1 minute
+
+        return () => clearInterval(interval);
+    }, []);
+
     const {
         users,
         selectedUser,

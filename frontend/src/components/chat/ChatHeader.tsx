@@ -1,5 +1,6 @@
 import type { User } from "@/types";
 import { useNavigate } from "react-router-dom";
+import { formatLastSeen } from "@/utils/time";
 
 type ChatHeaderProps = {
     user: User;
@@ -35,7 +36,9 @@ export default function ChatHeader({ user }: ChatHeaderProps) {
                 <div>
                     <p className="font-medium">{user.name}</p>
                     <p className="text-xs text-gray-400">
-                        {user.is_online ? "Online" : "Offline"}
+                        {user.is_online
+                            ? "Online"
+                            : formatLastSeen(user.last_seen)}
                     </p>
                 </div>
             </div>

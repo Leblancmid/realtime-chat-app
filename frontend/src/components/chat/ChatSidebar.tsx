@@ -1,4 +1,5 @@
 import type { User } from "@/types";
+import { formatLastSeen } from "@/utils/time";
 
 type ChatSidebarProps = {
     users: User[];
@@ -41,7 +42,9 @@ export default function ChatSidebar({
                         <div className="flex-1">
                             <p className="text-sm font-medium">{u.name}</p>
                             <p className="text-xs text-gray-400">
-                                {u.is_online ? "Online" : "Offline"}
+                                {u.is_online
+                                    ? "Online"
+                                    : formatLastSeen(u.last_seen)}
                             </p>
                         </div>
 
