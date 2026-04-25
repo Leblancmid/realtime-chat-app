@@ -5,7 +5,8 @@ import { useAuth } from "@/context/AuthContext";
 import { useNavigate } from "react-router-dom";
 
 import { Eye, EyeOff } from "lucide-react";
-import Toast from "@/components/ui/Toast";
+import { useToast } from "@/context/ToastContext";
+
 
 import type { RegisterForm } from "@/types";
 
@@ -30,10 +31,7 @@ export default function Register() {
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirm, setShowConfirm] = useState(false);
 
-    const [toast, setToast] = useState<{
-        message: string;
-        type: "success" | "error";
-    } | null>(null);
+    const { showToast } = useToast();
 
     const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
         setForm({
@@ -60,14 +58,14 @@ export default function Register() {
 
             await fetchUser();
 
-            setToast({ message: "Account created 🎉", type: "success" });
+            showToast(`Account created, `, "success");
 
             setTimeout(() => navigate("/dashboard"), 800);
         } catch (err: any) {
             if (err.response?.status === 422) {
                 setErrors(err.response.data.errors);
             } else {
-                setToast({ message: "Something went wrong", type: "error" });
+                showToast("Something went wrong");
             }
         } finally {
             setLoading(false);
@@ -196,15 +194,6 @@ export default function Register() {
                     </a>
                 </p>
             </form>
-
-            {/* TOAST */}
-            {toast && (
-                <Toast
-                    message={toast.message}
-                    type={toast.type}
-                    onClose={() => setToast(null)}
-                />
-            )}
         </div>
     );
 }
