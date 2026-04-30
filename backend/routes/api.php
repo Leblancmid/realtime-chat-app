@@ -17,6 +17,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/messages/{userId}', [MessageController::class, 'index']);
     Route::post('/messages', [MessageController::class, 'store']);
+    Route::post('/messages/react', [MessageController::class, 'react']);
 
     Route::post('/typing', function (Request $request) {
         broadcast(new \App\Events\UserTyping(

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { Message, User } from "@/types";
+import { api } from "@/api/axios";
 
 type Props = {
     msg: Message;
@@ -19,7 +20,13 @@ export default function ChatMessageItem({
     const BASE_URL = import.meta.env.VITE_API_URL;
 
     const [showReactions, setShowReactions] = useState(false);
-    const [reaction, setReaction] = useState<string | null>(null);
+
+    const handleReaction = async (emoji: string) => {
+        await api.post("/api/messages/react", {
+            message_id: msg.id,
+            reaction: emoji,
+        });
+    };
 
     return (
         <div
@@ -55,7 +62,7 @@ export default function ChatMessageItem({
                         {["👍", "🔥", "😂", "❤️"].map((r) => (
                             <button
                                 key={r}
-                                onClick={() => setReaction(r)}
+                                onClick={() => handleReaction(r)}
                                 className="hover:scale-125 transition"
                             >
                                 {r}
@@ -97,12 +104,21 @@ export default function ChatMessageItem({
                 </div>
 
                 {/* Reaction Display */}
-                {reaction && (
-                    <div
-                        className={`mt-1 text-xs ${isMe ? "text-right" : "text-left"
-                            }`}
-                    >
-                        {reaction}
+                {msg.reactions && msg.reactions.length > 0 && (
+                    <div className="flex gap-2 mt-1 text-xs">
+                        {Object.entries(
+                            msg.reactions.reduce<Record<string, number>>((acc, r) => {
+                                acc[r.reaction] = (acc[r.reaction] || 0) + 1;
+                                return acc;
+                            }, {})
+                        ).map(([emoji, count]) => (
+                            <span
+                                key={emoji}
+                                className="bg-gray-700 px-2 py-0.5 rounded-full"
+                            >
+                                {emoji} {count}
+                            </span>
+                        ))}
                     </div>
                 )}
 

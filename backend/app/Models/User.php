@@ -38,6 +38,11 @@ class User extends Authenticatable
             $this->last_seen->gt(now()->subMinutes(1)); // ✅ FIXED
     }
 
+    public function reactions()
+    {
+        return $this->hasMany(MessageReaction::class);
+    }
+
     protected $fillable = [
         'name',
         'email',

@@ -6,6 +6,12 @@ use Illuminate\Database\Eloquent\Model;
 
 class Message extends Model
 {
+    public function reactions()
+    {
+        return $this->hasMany(MessageReaction::class);
+    }
+
+
     protected $fillable = [
         'sender_id',
         'receiver_id',

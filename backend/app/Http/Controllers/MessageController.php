@@ -6,19 +6,21 @@ use App\Models\Message;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Events\MessageSent;
+use App\Models\MessageReaction;
 
 class MessageController extends Controller
 {
     public function index($userId)
     {
-        $messages = Message::where(function ($q) use ($userId) {
-            $q->where('sender_id', Auth::id())
-                ->where('receiver_id', $userId);
-        })->orWhere(function ($q) use ($userId) {
-            $q->where('sender_id', $userId)
-                ->where('receiver_id', Auth::id());
-        })
-            ->orderBy('created_at') // ✅ IMPORTANT
+        $messages = Message::with('reactions') // ✅ ADD THIS
+            ->where(function ($q) use ($userId) {
+                $q->where('sender_id', Auth::id())
+                    ->where('receiver_id', $userId);
+            })->orWhere(function ($q) use ($userId) {
+                $q->where('sender_id', $userId)
+                    ->where('receiver_id', Auth::id());
+            })
+            ->orderBy('created_at')
             ->get();
 
         // ✅ mark delivered
@@ -64,5 +66,25 @@ class MessageController extends Controller
         broadcast(new MessageSent($message))->toOthers();
 
         return $message;
+    }
+
+    public function react(Request $request)
+    {
+        $request->validate([
+            'message_id' => 'required|exists:messages,id',
+            'reaction' => 'required|string',
+        ]);
+
+        $reaction = MessageReaction::updateOrCreate(
+            [
+                'message_id' => $request->message_id,
+                'user_id' => Auth::id(),
+            ],
+            [
+                'reaction' => $request->reaction,
+            ]
+        );
+
+        return response()->json($reaction);
     }
 }
