@@ -75,6 +75,20 @@ class MessageController extends Controller
             'reaction' => 'required|string',
         ]);
 
+        $existing = MessageReaction::where('message_id', $request->message_id)
+            ->where('user_id', Auth::id())
+            ->first();
+
+        // ✅ If same reaction → remove (toggle off)
+        if ($existing && $existing->reaction === $request->reaction) {
+            $existing->delete();
+
+            return response()->json([
+                'removed' => true
+            ]);
+        }
+
+        // ✅ Otherwise update or create
         $reaction = MessageReaction::updateOrCreate(
             [
                 'message_id' => $request->message_id,

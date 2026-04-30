@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { Message, User } from "@/types";
+import type { Message, User, Reaction } from "@/types";
 import { api } from "@/api/axios";
 
 type Props = {
@@ -7,6 +7,7 @@ type Props = {
     isMe: boolean;
     isLast: boolean;
     selectedUser: User;
+    currentUser: User;
     onImageClick: (url: string) => void;
 };
 
@@ -15,18 +16,51 @@ export default function ChatMessageItem({
     isMe,
     isLast,
     selectedUser,
+    currentUser,
     onImageClick,
 }: Props) {
     const BASE_URL = import.meta.env.VITE_API_URL;
 
     const [showReactions, setShowReactions] = useState(false);
 
+    // ✅ local state (no mutation)
+    const [reactions, setReactions] = useState<Reaction[]>(
+        msg.reactions || []
+    );
+
+    // 🔥 Handle reaction
     const handleReaction = async (emoji: string) => {
-        await api.post("/api/messages/react", {
+        const res = await api.post("/api/messages/react", {
             message_id: msg.id,
             reaction: emoji,
         });
+
+        setReactions((prev) => {
+            // ❌ remove
+            if (res.data.removed) {
+                return prev.filter((r) => r.user_id !== currentUser.id);
+            }
+
+            // 🔁 update or add
+            const existingIndex = prev.findIndex(
+                (r) => r.user_id === currentUser.id
+            );
+
+            if (existingIndex !== -1) {
+                const updated = [...prev];
+                updated[existingIndex] = res.data;
+                return updated;
+            }
+
+            return [...prev, res.data];
+        });
     };
+
+    // 🔥 Group reactions
+    const grouped = reactions.reduce<Record<string, number>>((acc, r) => {
+        acc[r.reaction] = (acc[r.reaction] || 0) + 1;
+        return acc;
+    }, {});
 
     return (
         <div
@@ -47,7 +81,7 @@ export default function ChatMessageItem({
                 </div>
             )}
 
-            {/* Message Wrapper (IMPORTANT) */}
+            {/* Message Wrapper */}
             <div
                 className="relative max-w-xs"
                 onMouseEnter={() => setShowReactions(true)}
@@ -59,15 +93,26 @@ export default function ChatMessageItem({
                         className={`absolute -top-8 flex gap-2 bg-gray-800 px-2 py-1 rounded shadow-lg text-sm ${isMe ? "right-0" : "left-0"
                             }`}
                     >
-                        {["👍", "🔥", "😂", "❤️"].map((r) => (
-                            <button
-                                key={r}
-                                onClick={() => handleReaction(r)}
-                                className="hover:scale-125 transition"
-                            >
-                                {r}
-                            </button>
-                        ))}
+                        {["👍", "🔥", "😂", "❤️"].map((r) => {
+                            const isActive = reactions.some(
+                                (x) =>
+                                    x.user_id === currentUser.id &&
+                                    x.reaction === r
+                            );
+
+                            return (
+                                <button
+                                    key={r}
+                                    onClick={() => handleReaction(r)}
+                                    className={`transition hover:scale-125 ${isActive
+                                        ? "bg-blue-600 rounded px-1"
+                                        : ""
+                                        }`}
+                                >
+                                    {r}
+                                </button>
+                            );
+                        })}
                     </div>
                 )}
 
@@ -104,17 +149,12 @@ export default function ChatMessageItem({
                 </div>
 
                 {/* Reaction Display */}
-                {msg.reactions && msg.reactions.length > 0 && (
-                    <div className="flex gap-2 mt-1 text-xs">
-                        {Object.entries(
-                            msg.reactions.reduce<Record<string, number>>((acc, r) => {
-                                acc[r.reaction] = (acc[r.reaction] || 0) + 1;
-                                return acc;
-                            }, {})
-                        ).map(([emoji, count]) => (
+                {Object.keys(grouped).length > 0 && (
+                    <div className="flex gap-2 mt-1 text-xs flex-wrap">
+                        {Object.entries(grouped).map(([emoji, count]) => (
                             <span
                                 key={emoji}
-                                className="bg-gray-700 px-2 py-0.5 rounded-full"
+                                className="bg-gray-700 px-2 py-0.5 rounded-full flex items-center gap-1"
                             >
                                 {emoji} {count}
                             </span>

@@ -45,6 +45,7 @@ export default function ChatMessages({
                         <ChatMessageItem
                             key={msg.id}
                             msg={msg}
+                            currentUser={currentUser}
                             isMe={isMe}
                             isLast={index === lastSentIndex}
                             selectedUser={selectedUser}
